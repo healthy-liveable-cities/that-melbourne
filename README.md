@@ -25,15 +25,3 @@ Walking trips 0-2km, cycling trips between 2-10km";
 "Trip purpose", "All, Commuting")
 
 pander(scenarios)
-
-
-
-
-
-| Scenario      | Options   |       
-| ------------- |-----------| 
-|Trip purpose   |  *All*: Work-related, education, leisure, shopping,  pick-up or drop-off someone/something, personal business, other, accompany someone,  at or go home.|
-|               |  *Commute*: work related and education|  
-|Distance to replace | *Walking*: 0-1km, 0-2km |
-|                    | *Cycling*: 0-2km, 0-5km , 0-10km |
-|                    | *Walking and Cycling*: Walking trips 0-1km, cycling trips between 1-2km, Walking trips 0-1km, cycling trips between 1-5km, Walking trips 0-1km, cycling trips between 1-10km, Walking trips 0-2km, cycling trips between 2-5km, Walking trips 0-2km, cycling trips between 2-10km |
