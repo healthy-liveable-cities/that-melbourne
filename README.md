@@ -13,8 +13,8 @@ The Transport Health Assessment Tool for Melbourne models scenarios for replacin
 
 | Scenario      | Options          
 | ------------- |---------------------------------------------------------------| 
-|Trip purpose   |  *All*: Work-related, education, leisure, shopping, 
-|               |  pick-up or drop-off someone/something, personal business, 
-|               |   other, accompany someone,  at or go home.
-|               |  *Commute*: work related and education|       
+|Trip purpose   |  *All*: Work-related, education, leisure, shopping,           |
+|               |  pick-up or drop-off someone/something, personal business,    |
+|               |   other, accompany someone,  at or go home.                   |
+|               |  *Commute*: work related and education|                       |  
 | ----------------------------------------------------------------------------- | 
