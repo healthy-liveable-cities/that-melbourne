@@ -16,10 +16,10 @@ The Transport Health Assessment Tool for Melbourne models scenarios for replacin
 | -------------------------- | -------------------------------------------------- |
 | Replace distance walking   | 0-1 km, 0-2 km                                     |
 | Replace distance cycling   | 0-2km, 0-5km, 0-10km                               |
-| Both walking and cycling   | Walking trips 0-1km & cycling trips between 1-2km; |
-|                            | Walking trips 0-1km & cycling trips between 1-5km; | 
-|                            | Walking trips 0-1km & cycling trips between 1-10km;|  
-|                            | Walking trips 0-2km & cycling trips between 2-5km; |   
-|                            |Walking trips 0-2km &cycling trips between 2-10km   |   
+| Both walking and cycling   | Walking trips 0-1km & cycling trips between 1-2km  |
+|                            | Walking trips 0-1km & cycling trips between 1-5km  | 
+|                            | Walking trips 0-1km & cycling trips between 1-10km |  
+|                            | Walking trips 0-2km & cycling trips between 2-5km  |   
+|                            | Walking trips 0-2km &cycling trips between 2-10km  |   
 | Trip purpose               | All, Commuting         
 
