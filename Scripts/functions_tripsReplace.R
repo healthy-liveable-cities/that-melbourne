@@ -1,9 +1,9 @@
-#### Function to create scenario trips to use in mslt_code
+############################# FUNCTIONS CREATE SCENARIO FILES SHORT TRIPS MODEL ######################################################
 
-suppressPackageStartupMessages(library(dplyr)) # for manipulating data
+suppressPackageStartupMessages(library(dplyr))
 
-
-calculateScenarioMel2 <- function(trips_melbourne = in_data, 
+### Function to create trips files (used to create scenario trips)
+calculateShortTrips <- function(trips_melbourne = in_data, 
                                   walk_speed=4,
                                   cycle_speed=11,
                                   original_mode = "car" , # Just car trips can be replaced
@@ -11,6 +11,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                   distance_replace_cycle = 0,
                                   purpose_input = "Leisure,Shopping,Work,Education,Other") {
   
+  ## Data to test function
   # in_data="Data/processed/trips_melbourne.csv"
   # in_speed="Data/processed/speed_trips_melbourne.csv"
   # trips_melbourne = in_data
@@ -20,7 +21,6 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
   # distance_replace_cycle = 10
   # purpose_input = "Work,Education"
   
-  # it's easier to pass in a single string and then split it here
   purpose_input <- unlist(strsplit(purpose_input,","))
   
   
@@ -42,7 +42,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
     dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base %in% original_mode 
                                           & trip_purpose %in% purpose_input
                                           & trip_distance_base !=0
-                                          & trip_distance_base <= distance_replace_walk #=<
+                                          & trip_distance_base <= distance_replace_walk 
                                           &  distance_replace_walk >0
                                           &  distance_replace_walk != distance_replace_cycle,
                                           "walking",
@@ -52,7 +52,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                           & trip_purpose %in% purpose_input
                                           & trip_distance_base !=0
                                           & trip_distance_base > distance_replace_walk 
-                                          & trip_distance_base <= distance_replace_cycle #=<
+                                          & trip_distance_base <= distance_replace_cycle 
                                           &  distance_replace_cycle >0,
                                           "bicycle",
                                           trip_mode_scen)) %>%
@@ -73,16 +73,17 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
   
 }
 
+### Function to create matched population
 
 generateMatchedPopulationScenario <- function(output_location="./scenarios/",
                                               scenario_name="default",
                                               in_data="./Data/processed/trips_melbourne.csv",
-                                              # in_speed="./Data/processed/speed_trips_melbourne.csv",
                                               max_walk,
                                               max_cycle,
                                               purpose) {
   
-  # in_speed="./Data/processed/speed_trips_melbourne.csv"
+
+  ## Data to test function
   # output_location="./scenarios"
   # scenario_name="all_2_10"
   # in_data="./Data/processed/trips_melbourne.csv"
@@ -95,17 +96,8 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios/",
   dir.create(paste0(output_location,"/scenarioTrips"), recursive=TRUE, showWarnings=FALSE)
   dir.create(paste0(output_location,"/personTravel"), recursive=TRUE, showWarnings=FALSE)
   
-  #### 1) Generate trip set with baseline and scenario trips ####
-  
-  ### The following code returns persons_matched, which is an input of CalculateModel
-  ### Graph: depicts change in trips by mode.
-  
-  ### Calculate scenarios of replacing car trips by walking and/or cycling. 
-  ### Outputs: trip set with baseline and scenario trips and associated distance and time in hours per week.
-  ### Inputs: baseline trips melbourne and speed file by age and sex derived from VISTA 2017-18 TRIP file.
-  # max_walk=2
-  # max_cycle=0
-  scenario_trips <- calculateScenarioMel2(
+  # Scenario trips
+  scenario_trips <- calculateShortTrips(
     trips_melbourne = in_data, 
     # speed = in_speed,
     original_mode = "car", # c("car","public.transport") , # Just car trips can be replaced
@@ -117,18 +109,21 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios/",
   write.csv(scenario_trips, paste0(output_location,"/scenarioTrips/",scenario_name,".csv"), row.names=F, quote=T)
   
   
-  ### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
+  # Persons travel (VISTA people are allocated travel patterns)
   persons_travel <- calculatePersonsTravelScenario(
-    travel_data_location="./Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-    scenario_location=scenario_trips ### BZ: Generated in step 1
+    travel_data_location="./Data/processed/travel_data.csv", ##  generated in script runInputsMelbourneExposure.R 
+    scenario_location=scenario_trips ## Generated above
   )
   write.csv(persons_travel, paste0(output_location,"/personTravel/",scenario_name,".csv"), row.names=F, quote=T)
   
-  #### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
+  # Matched population
   persons_matched <- calculatePersonsMatch(
-    pa_location="./Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-    persons_travel_location=persons_travel  #"Data/processed/persons_travel.csv"
+    pa_location="./Data/processed/persons_pa.csv", ## generated in script runInputsMelbourneExposure.R 
+    persons_travel_location=persons_travel  ## Generated above
   ) %>% dplyr::mutate(scen=scenario_name)
-  ##### ADD scenario names
+
+  
   write.csv(persons_matched, paste0(output_location,"/",scenario_name,".csv"), row.names=F, quote=T)
 }
+
+

@@ -40,18 +40,3 @@ persons_pa <- calculatePersonsPA(
   hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 )
 write.csv(persons_pa, "Data/processed/persons_pa.csv", row.names=F, quote=F)
-
-
-
-### Injuries for ithim-r only
-### Includes all casuality types: "Other injury"   "Serious injury" "Fatality"  
-### Filter type fatality to start, then, same process to serious injuries to modify ylds (or not)
-
-source("Scripts/data_prep/injuries_prep.R")
-injuries_melbourne <- calculateInjuries(
-  accident_location="Data/VicRoads Road Injuries/Original_ACCIDENT.csv",
-  accident_event_location="Data/VicRoads Road Injuries/Original_ACCIDENT.csv",
-  person_location="Data/VicRoads Road Injuries/Original_PERSON.csv",
-  vehicle_location="Data/VicRoads Road Injuries/Original_VEHICLE.csv"
-) %>% dplyr::filter(cas_type == "Fatality")
-write.csv(injuries_melbourne,"Data/processed/injuries_melbourne.csv", row.names=F, quote=F)

@@ -487,7 +487,6 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   
   return(persons_matched_final)
 }
-# write_csv(persons_matched_final, "Data/processed/matched_pop.csv")
 
 
 
