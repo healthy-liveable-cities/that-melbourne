@@ -1065,13 +1065,16 @@ combineOutputs <- function(inputDirectory,outputFile) {
   saveRDS(output_df, file=outputFile)
 }
 
-dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
+
+
 # For probabilistic and deterministic results
 summariseOutputs <- function(scenario_location,output_df){
-
+  
+  
+  # in case the directory hasn't been made yet
+  dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
   
   memory.limit(size=56000) 
-  
   
   output_df_year <- output_df  %>% # Create a simulation year columns 
     group_by(run, age_group, Gender, .add=TRUE) %>%
@@ -1114,8 +1117,7 @@ summariseOutputs <- function(scenario_location,output_df){
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T))
   # filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
-  write.csv(output_df_agg, paste0(scenario_location,"/output_df_agg.csv"),
-            row.names=F, quote=T)
+  write.csv(output_df_agg, paste0(scenario_location,"/output_df_agg.csv"),row.names=F, quote=T)
   rm(output_df_agg)
   
   
