@@ -21,6 +21,7 @@ finalLocationProb <- "output/probabilistic/melbourne-outputs"
 finalLocationDeter <- "output/deterministic/melbourne-outputs"
 
 
+
 # Local drive-deterministic (large files)
 
 outputLocationDeter <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
@@ -35,12 +36,13 @@ combinedLocationMMETSProb <-  "C:/home/results/scenarioTripsReplace/probabilisti
 summarisedLocationProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
 
 # Create directories, in case not created yet
-dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
+
 dir.create(finalLocationProb, recursive=TRUE, showWarnings=FALSE)
 dir.create(finalLocationDeter, recursive=TRUE, showWarnings=FALSE)
 dir.create(combinedLocationDeter, recursive=TRUE, showWarnings=FALSE)
 dir.create(combinedLocationProb, recursive=TRUE, showWarnings=FALSE)
-
+dir.create(summarisedLocationDeter, recursive=TRUE, showWarnings=FALSE)
+dir.create(summarisedLocationProb, recursive=TRUE, showWarnings=FALSE)
 
 
 #----- Create scenario files -----
@@ -73,7 +75,6 @@ scenarios_ShortTrips <- crossing(data.frame(max_walk=maxDistanceWalk),
   mutate(trips_location=paste0(scenarioTripsLocation,"/",scenario,".csv")) %>%
   mutate(outputLocationProb=paste0(outputLocationProb,"/",scenario)) %>%
   mutate(outputLocationDeter=paste0(outputLocationDeter,"/",scenario))
-
 
 
 ### Generate 2) trips files, 3) persons travel and 4) matched population. One of each per scenario
@@ -189,7 +190,7 @@ saveRDS(PA_guide_weighted, file=paste0(finalLocationDeter, "/PAallGuide.rds"))
 
 #----- Run model deterministic -----
 
-# Run model
+# Run model (BZ: problem with matched population, sometimes it says that it cannot find it. )
 
 for (i in 1:nrow(scenarios_ShortTrips)){
 CalculationModel(output_location=scenarios_ShortTrips[i,]$outputLocationDeter,
@@ -199,7 +200,7 @@ CalculationModel(output_location=scenarios_ShortTrips[i,]$outputLocationDeter,
 
 # Summarise outputs
 
-print(paste0("merging ",nrow(scenarios_ShortTrips)," scenario outputs into single file at ",Sys.time()))
+
 
 # Function to combine outputs
 combineOutputs <- function(inputDirectory,outputFile) {
@@ -209,6 +210,7 @@ combineOutputs <- function(inputDirectory,outputFile) {
   saveRDS(output_df, file=outputFile)
 }
 
+print(paste0("merging ",nrow(scenarios_ShortTrips)," scenario outputs into single file at ",Sys.time()))
 # Combine outputs
 for (i in 1:nrow(scenarios_ShortTrips)){
   combineOutputs(paste0(scenarios_ShortTrips[i,]$outputLocationDeter,'/output_df'),
@@ -221,9 +223,8 @@ for (i in 1:nrow(scenarios_ShortTrips)){
 
 print(paste0("summarising ",nrow(scenarios_ShortTrips)," scenario outputs at ",Sys.time()))
 for (i in 1:nrow(scenarios_ShortTrips)){
-  output_df <- readRDS(paste0(combinedLocationDeter,"/",scenarios_ShortTrips[i,]$scenario,".rds"))
-  summariseOutputs(scenario_location=
-                     paste0(summarisedLocationDeter,"/",scenarios_ShortTrips[i,]$scenario),
+  output_df <- readRDS(paste0(combinedLocationDeter,"/",scenarios_ShortTrips[1,]$scenario,".rds"))
+  summariseOutputs(scenario_location=paste0(summarisedLocationDeter,"/",scenarios_ShortTrips[i,]$scenario),
                    output_df)
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
 }
@@ -275,7 +276,7 @@ for (i in 1:nrow(scenarios_ShortTrips)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_ShortTrips[1,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<- 1:1000
+  seeds<- 1:10
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
@@ -302,7 +303,7 @@ for (i in 1:nrow(scenarios_ShortTrips)){
 ##### Create directories if not created
 
 
-print(paste0("merging ",nrow(scenarios_ShortTrips)," scenario outputs into single file at ",Sys.time()))
+print(paste0("merging ",nrow()," scenario outputs into single file at ",Sys.time()))
 
 ### Combine outputs and save (outputs raw here "C:/dot-hia/output/melbourne-outputs-raw" get combined to here "C:/dot-hia/output/melbourne-outputs-combined")
 
