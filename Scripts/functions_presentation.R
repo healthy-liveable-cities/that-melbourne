@@ -1,3 +1,5 @@
+######################################### FUNCTIONS TO PRESENT MODEL OUTPUTS ############################################
+
 library(ggplot2)
 library(dplyr) # for manipulating data
 library(tidyr) # for pivoting data
@@ -5,7 +7,7 @@ library(scales) # for reordering factor for graphs
 library(zoo) # for calculating rolling mean
 
 
-############################## Graphs function (to do age and sex graphs) ################################################
+# Graphs general inputs
 diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
                    "Ischemic heart\ndisease","Stroke","Lung cancer",
@@ -23,7 +25,7 @@ auo_theme <- theme_bw() +
         panel.grid.minor = element_blank(),
         panel.spacing = unit(0.8, "lines")) # use this to change the spacing between the different disease plots
 
-########## Change in mode of transport
+# ----- Change in mode of transport -----
 GraphsMode <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
@@ -56,26 +58,30 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
           legend.key = element_blank())
 }
 
-GetMinutesText <- function(age_val,sex_val,scen_val) {
+
+# ----- Change in minutes walking ----
+minutesTable <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
-  
-  dataFiltered1 <- PAall %>%
-    filter(age==age_val,sex==sex_val,scen==scen_val) 
-  
-  dataFiltered2 <- PAallGuide %>%
-    filter(age==age_val,sex==sex_val,scen==scen_val) 
-  
-  text <- cat("The shift from car travel for", dataFiltered1$scen, " ", "for", dataFiltered1$sex,
-              " ", "adults aged", dataFiltered1$age, " ", "for the typical resident of Melbourne", 
-              "increases walking from", dataFiltered1$walk_base, "to", dataFiltered1$walk_scen,
-              "and cycling", dataFiltered1$cycle_base, "to", dataFiltered1$cycle_scen, "and increases those achieving 
-  physical activity guidelines from", dataFiltered2$meets_base*100,"%", "to", dataFiltered2$meets_scen*100,"%")
-  
-  text
-  
+
+  dataFiltered <- PAall %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(age, sex, walk_base, walk_scen, cycle_base, cycle_scen)
+  }
+     
+# ----- Meets guidelines minutes -----
+
+minutesGuide <- function(age_val,sex_val,scen_val) {
+  # age_val='all'; sex_val='all'; scen_val='all_2_10'
+ 
+  dataFiltered <- PAallGuide %>% 
+    mutate_if(is.numeric, round, digits = 4) %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(age, sex, meets_base, meets_scen) %>%
+    mutate(meets_base=paste0(meets_base*100, "%"), 
+           meets_scen=paste0(meets_scen*100, "%"))
 }
 
-# diseasesExample$measure cases prevented
+# ---- Disease tables -----
 diseasesTable <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
@@ -89,6 +95,7 @@ diseasesTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,disease,mean,median,percentile025,percentile975)
 }
 
+# ---- Disease tables -----
 HALYsTable <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
@@ -99,6 +106,7 @@ HALYsTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,mean,median,percentile025,percentile975)
 }
 
+# ---- Disease change incidence table -----
 diseasesChangeIncidenceTable <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   tmpPlot <- output_diseases_change %>%
@@ -111,6 +119,7 @@ diseasesChangeIncidenceTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(disease,median,percentile025,percentile975)
 }
 
+# ---- Disease change incidence graph -----
 diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
@@ -132,6 +141,7 @@ diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
     theme(axis.title.y=element_blank())
 }
 
+# ---- Disease change deaths graph -----
 diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
@@ -153,9 +163,10 @@ diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
     theme(axis.title.y=element_blank())
 }
 
+# ---- Disease change incidence over time graph -----
 incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
-  tmpPlot <- output_df_agg %>%
+  tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
     filter(measure=="inc.num" & scenario== "diff") %>%
     dplyr::select(year,disease,median,percentile025,percentile975) %>%
@@ -187,9 +198,10 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
     auo_theme
 }
 
+# ---- Disease change mortality over time graph -----
 mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
-  tmpPlot <- output_df_agg %>%
+  tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
     filter(measure=="mx.num" & scenario== "diff") %>%
     dplyr::select(year,disease,median,percentile025,percentile975) %>%
@@ -222,9 +234,10 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
     auo_theme
 }
 
+# ---- Life years change over time graph -----
 halyGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
-  tmpPlot <- output_df_agg %>%
+  tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
     filter(measure=="Lwx" & scenario== "diff") %>%
     dplyr::select(year,median,percentile025,percentile975) %>%
@@ -257,7 +270,7 @@ halyGraph <- function(age_val,sex_val,scen_val) {
 
 lyGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
-  tmpPlot <- output_df_agg %>%
+  tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
     filter(measure=="Lx" & scenario== "diff") %>%
     dplyr::select(year,median,percentile025,percentile975) %>%

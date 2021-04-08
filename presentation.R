@@ -24,7 +24,11 @@ age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus"
 
 # Load data ---------------------------------------------------------------
 ## select folder for probabilistic or deterministic results
-finalLocation <- "./output/deterministic/melbourne-outputs"
+### Deterministic
+# finalLocation <- "./output/deterministic/melbourne-outputs"
+### Probabilistic
+finalLocation <- "./output/probabilistic/melbourne-outputs"
+
 output_df_agg_all<-readRDS(paste0(finalLocation,"/output_df_agg.rds"))
 output_diseases_change<-readRDS(paste0(finalLocation,"/output_diseases_change.rds"))
 output_life_expectancy_change<-readRDS(paste0(finalLocation,"/output_life_expectancy_change.rds"))

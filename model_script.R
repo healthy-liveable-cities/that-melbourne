@@ -276,7 +276,7 @@ for (i in 1:nrow(scenarios_ShortTrips)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_ShortTrips[1,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<- 1:10
+  seeds<- 1:1000
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
