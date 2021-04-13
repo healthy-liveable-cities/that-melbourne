@@ -12,6 +12,9 @@ diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
                    "Ischemic heart\ndisease","Stroke","Lung cancer",
                    "Uterine cancer")
+
+
+
 auo_theme <- theme_bw() +
   theme(axis.text = element_text(size=14),
         axis.title = element_text(size=16),
@@ -31,10 +34,11 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
   
   dataFiltered <- output_transport_modes %>% 
     dplyr::filter(age==age_val,sex==sex_val,scen==scen_val) %>%
-    mutate(scenario=factor(scenario, levels=c("bl","sc"), labels=c("Baseline", "Scenario"))) %>%
+    mutate(scenario=factor(scenario, levels=c("bl","sc"), labels=c("Base case", "Scenario"))) %>%
     mutate(mode=factor(mode,
                        levels=c("walking","bicycle","public.transport","car","other"),
-                       labels=c("Walking","Cycling","Public transport","Driving","Other")))
+                       labels=c("Walking","Cycling","Public transport","Driving","Other"))) %>%
+    mutate(name=paste0(unique(age), unique(sex), unique(scen)))
   
   ggplot(dataFiltered, aes(x=prop, y=mode, fill=scenario)) +
     geom_bar(stat="identity", position="dodge") + 
@@ -45,12 +49,12 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
               position=position_dodge(width=0.9),
               hjust=-0.05, vjust=0.5, size=5) +
     scale_x_continuous(labels = scales::percent_format(accuracy = 5L),limits=c(0,.8)) +
+    labs (title = paste(AGE, SEX, SCEN)) + ### use labels here to write sth like: All types of trips replaced 
     theme_classic() +
-    theme(plot.title = element_blank(),
+    theme(plot.title=element_text(size=16),
           axis.text=element_text(size=14),
           axis.title=element_text(size=16),
           axis.title.y=element_blank(),
-          # axis.text.x = element_text(angle=90, vjust=0.5, hjust=1),
           legend.position = c(.99, .99),
           legend.justification = c(1,1),
           legend.title = element_blank(),
