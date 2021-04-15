@@ -76,6 +76,8 @@ scenarios_ShortTrips <- crossing(data.frame(max_walk=maxDistanceWalk),
   mutate(outputLocationProb=paste0(outputLocationProb,"/",scenario)) %>%
   mutate(outputLocationDeter=paste0(outputLocationDeter,"/",scenario))
 
+  
+
 
 ### Generate 2) trips files, 3) persons travel and 4) matched population. One of each per scenario
 

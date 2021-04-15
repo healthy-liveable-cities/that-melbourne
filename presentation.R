@@ -24,12 +24,14 @@ age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus"
 
 # Load data ---------------------------------------------------------------
 ## select folder for probabilistic or deterministic results
-### Deterministic
-# finalLocation <- "./output/deterministic/melbourne-outputs"
+## Deterministic
+finalLocation <- "./output/deterministic/melbourne-outputs"
 ### Probabilistic
-finalLocation <- "./output/probabilistic/melbourne-outputs"
+# finalLocation <- "./output/probabilistic/melbourne-outputs"
 
-output_df_agg_all<-readRDS(paste0(finalLocation,"/output_df_agg.rds"))
+
+
+output_df_agg_all <-readRDS(paste0(finalLocation,"/output_df_agg.rds"))
 output_diseases_change<-readRDS(paste0(finalLocation,"/output_diseases_change.rds"))
 output_life_expectancy_change<-readRDS(paste0(finalLocation,"/output_life_expectancy_change.rds"))
 output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_change.rds"))
@@ -43,9 +45,9 @@ output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rd
 # scen_cal: "all_0_2", "commuting_0_2", all_0_5", "commuting_0_5", "all_0_10", "commuting_0_10", "all_1_2", 
 # "commuting_1_2", "all_1_5", "commuting_1_5", "all_1_10", "commuting_1_10", "all_2_5", "commuting_2_5", "all_2_10", "commuting_2_10"
 
-AGE = "15-19"
-SEX = "female"
-SCEN = "all_2_5"
+AGE = "all"
+SEX = "all"
+SCEN = "all_0_0"
 
 # Transport graph ----------------------------------------------
 GraphsMode(

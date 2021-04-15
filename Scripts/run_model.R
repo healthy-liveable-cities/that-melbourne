@@ -577,23 +577,23 @@ GetParamters <- function(NSAMPLES = 1,
           rlnorm(NSAMPLES, GetLocation(val[1], val[2]), GetShape(val[1], val[2]))
       }
     }
-    
-    # Marginal METs
-    # current version of model does not include uncertainty for MMETs
-    normVariablesMMETs <- c("MMET_CYCLING",
-                            "MMET_WALKING"
-                            
-    )
-    for (i in 1:length(normVariablesMMETs)) {
-      name <- normVariablesMMETs[i]
-      val <- get(normVariablesMMETs[i])
-      if (length(val) == 1) {
-        assign(name, val, envir = .GlobalEnv)
-      } else {
-        parameters[[name]] <-
-          rlnorm(NSAMPLES, log(val[1]), log(val[2]))
-      }
-    }
+    # 
+    # # Marginal METs
+    # # current version of model does not include uncertainty for MMETs
+    # normVariablesMMETs <- c("MMET_CYCLING",
+    #                         "MMET_WALKING"
+    #                         
+    # )
+    # for (i in 1:length(normVariablesMMETs)) {
+    #   name <- normVariablesMMETs[i]
+    #   val <- get(normVariablesMMETs[i])
+    #   if (length(val) == 1) {
+    #     assign(name, val, envir = .GlobalEnv)
+    #   } else {
+    #     parameters[[name]] <-
+    #       rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+    #   }
+    # }
     
     
     # Relative risks physical activity
