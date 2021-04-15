@@ -47,7 +47,7 @@ output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rd
 
 AGE = "all"
 SEX = "all"
-SCEN = "all_0_0"
+SCEN = "all_2_5"
 
 # Transport graph ----------------------------------------------
 GraphsMode(

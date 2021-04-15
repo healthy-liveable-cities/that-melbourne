@@ -606,12 +606,12 @@ GetParamters <- function(NSAMPLES = 1,
   }
   
   else {
-    MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
-    MMET_WALKING = c(2.53, 1.1),
-    parameters$DIABETES_IHD_RR_F <- 2.82 
-    parameters$DIABETES_STROKE_RR_F <- 2.28 
-    parameters$DIABETES_IHD_RR_M <- 2.16 
-    parameters$DIABETES_STROKE_RR_M <- 1.83 
+    parameters$MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
+    parameters$MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
+    parameters$DIABETES_IHD_RR_F <- 2.82 ## c(2.82, CI (2.35, 3.38) get SD from CI
+    parameters$DIABETES_STROKE_RR_F <- 2.28 ## c(2.28) CI (1.93, 2.69) get SD from CI
+    parameters$DIABETES_IHD_RR_M <- 2.16 ## c(2.16, CI (1.82, 2.56) get SD from CI
+    parameters$DIABETES_STROKE_RR_M <- 1.83 ## c(1.83) CI (1.60, 2.08) get SD from CI
   }
   
   
@@ -642,8 +642,8 @@ CalculationModel <- function(seed=1,
   parameters <- GetParamters(
     NSAMPLES = 1,
     matched_population = persons_matched,
-    MMET_CYCLING = 5.8,
-    MMET_WALKING = 2.5,
+    MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
+    MMET_WALKING = c(2.53, 1.1),
     PA_DOSE_RESPONSE_QUANTILE = probabilistic)
   
   cat('test\n')
