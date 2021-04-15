@@ -577,23 +577,23 @@ GetParamters <- function(NSAMPLES = 1,
           rlnorm(NSAMPLES, GetLocation(val[1], val[2]), GetShape(val[1], val[2]))
       }
     }
-    # 
-    # # Marginal METs
-    # # current version of model does not include uncertainty for MMETs
-    # normVariablesMMETs <- c("MMET_CYCLING",
-    #                         "MMET_WALKING"
-    #                         
-    # )
-    # for (i in 1:length(normVariablesMMETs)) {
-    #   name <- normVariablesMMETs[i]
-    #   val <- get(normVariablesMMETs[i])
-    #   if (length(val) == 1) {
-    #     assign(name, val, envir = .GlobalEnv)
-    #   } else {
-    #     parameters[[name]] <-
-    #       rlnorm(NSAMPLES, log(val[1]), log(val[2]))
-    #   }
-    # }
+
+    # Marginal METs
+    # current version of model does not include uncertainty for MMETs
+    normVariablesMMETs <- c("MMET_CYCLING",
+                            "MMET_WALKING"
+
+    )
+    for (i in 1:length(normVariablesMMETs)) {
+      name <- normVariablesMMETs[i]
+      val <- get(normVariablesMMETs[i])
+      if (length(val) == 1) {
+        assign(name, val, envir = .GlobalEnv)
+      } else {
+        parameters[[name]] <-
+          rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+      }
+    }
     
     
     # Relative risks physical activity
@@ -606,8 +606,8 @@ GetParamters <- function(NSAMPLES = 1,
   }
   
   else {
-    parameters$MMET_CYCLING <- 5.8 
-    parameters$MMET_WALKING <- 2.5 
+    MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
+    MMET_WALKING = c(2.53, 1.1),
     parameters$DIABETES_IHD_RR_F <- 2.82 
     parameters$DIABETES_STROKE_RR_F <- 2.28 
     parameters$DIABETES_IHD_RR_M <- 2.16 
