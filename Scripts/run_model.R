@@ -639,6 +639,9 @@ CalculationModel <- function(seed=1,
   
   DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM")
   
+  # if persons_matched is a location, load the csv
+  if(is.character(persons_matched)) persons_matched<-read.csv(persons_matched,as.is=T,fileEncoding="UTF-8-BOM")
+  
   set.seed(seed)
   
   cat(paste0("have set seed=", seed,"\n"))
@@ -649,7 +652,8 @@ CalculationModel <- function(seed=1,
     MMET_WALKING = c(2.53, 1.1),
     PA_DOSE_RESPONSE_QUANTILE = probabilistic)
   
-  cat('test\n')
+  cat(paste0('persons_matched length is ',nrow(persons_matched),
+             ' (>0 means the dataframe is correctly loaded)\n'))
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
   

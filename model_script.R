@@ -15,25 +15,34 @@ source("Scripts/data_prep/population_prep.R")
 # Outputs location
 
 # Working directory
-scenarioLocation <- "./scenarios"
+scenarioLocation      <- "./scenarios"
 scenarioTripsLocation <- "./scenarios/scenarioTrips"
-finalLocationProb <- "output/probabilistic/melbourne-outputs"
-finalLocationDeter <- "output/deterministic/melbourne-outputs"
+finalLocationProb     <- "output/probabilistic/melbourne-outputs"
+finalLocationDeter    <- "output/deterministic/melbourne-outputs"
 
 
 
 # Local drive-deterministic (large files)
+# outputLocationDeter        <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
+# combinedLocationDeter      <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
+# combinedLocationMMETSDeter <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
+# summarisedLocationDeter    <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
 
-outputLocationDeter <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
-combinedLocationDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
-combinedLocationMMETSDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
-summarisedLocationDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
+outputLocationDeter        <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
+combinedLocationDeter      <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
+combinedLocationMMETSDeter <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
+summarisedLocationDeter    <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
 
 # Local drive-probabilistic (large files)
-outputLocationProb <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
-combinedLocationProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
-combinedLocationMMETSProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
-summarisedLocationProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
+# outputLocationProb        <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
+# combinedLocationProb      <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
+# combinedLocationMMETSProb <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
+# summarisedLocationProb    <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
+
+outputLocationProb        <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
+combinedLocationProb      <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
+combinedLocationMMETSProb <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
+summarisedLocationProb    <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
 
 # Create directories, in case not created yet
 
@@ -196,7 +205,7 @@ saveRDS(PA_guide_weighted, file=paste0(finalLocationDeter, "/PAallGuide.rds"))
 
 for (i in 1:nrow(scenarios_ShortTrips)){
 CalculationModel(output_location=scenarios_ShortTrips[i,]$outputLocationDeter,
-                 persons_matched=read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"), 
+                 persons_matched=scenarios_ShortTrips[i,]$scenario_location, 
                  probabilistic = F)
 }
 
