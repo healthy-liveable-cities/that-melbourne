@@ -503,7 +503,7 @@ GetLocation <- function(mean, shape) {
 
 
 GetParamters <- function(NSAMPLES = 1,
-                         matched_population=matched_population, # from running step two Melbourne Model
+                         # matched_population=matched_population, # from running step two Melbourne Model
                          MMET_CYCLING = MMET_CYCLING,
                          MMET_WALKING = MMET_WALKING,
                          PA_DOSE_RESPONSE_QUANTILE = probabilistic,
@@ -512,6 +512,8 @@ GetParamters <- function(NSAMPLES = 1,
                          location_population="Greater Melbourne"){
   parameters <- list()
   
+  
+  
   # Fixed inputs
   
   mslt_general="Data/processed/mslt/mslt_df.csv"
@@ -519,6 +521,7 @@ GetParamters <- function(NSAMPLES = 1,
   death_rates_projections="Data/processed/mslt/deaths_projections.csv"
   population_data="Data/original/abs/population_census.xlsx"
   disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+  # persons_matched <-  read.csv(matched_population ,as.is=T, fileEncoding="UTF-8-BOM")
   
   
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
@@ -542,7 +545,7 @@ GetParamters <- function(NSAMPLES = 1,
   
   parameters$MSLT_DF <- MSLT_DF ### includes death_rate_periodic
   parameters$death_projections <- death_rates ### death projection data
-  parameters$persons_matched<- persons_matched
+  # parameters$persons_matched<- persons_matched
   parameters$DISEASE_INVENTORY <- DISEASE_INVENTORY
   parameters$disease_inventory_location <- disease_inventory_location
   parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
@@ -641,7 +644,7 @@ CalculationModel <- function(seed=1,
   cat(paste0("have set seed=", seed,"\n"))
   parameters <- GetParamters(
     NSAMPLES = 1,
-    matched_population = persons_matched,
+    # matched_population = persons_matched,
     MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
     MMET_WALKING = c(2.53, 1.1),
     PA_DOSE_RESPONSE_QUANTILE = probabilistic)

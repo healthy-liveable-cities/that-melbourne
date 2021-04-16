@@ -200,6 +200,20 @@ CalculationModel(output_location=scenarios_ShortTrips[i,]$outputLocationDeter,
                  probabilistic = F)
 }
 
+####Alan, just leaving here to check that all the persons matched files are different # Check persons_matched
+# test_list <- list()
+# index <- 1
+# cat(paste0("have set seed=", seed,"\n"))
+# for (i in 1:nrow(scenarios_ShortTrips)){
+#   test_list[[index]] <- GetParamters(
+#   NSAMPLES = 1,
+#   matched_population = scenarios_ShortTrips[i,]$scenario_location,
+#   MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
+#   MMET_WALKING = c(2.53, 1.1),
+#   PA_DOSE_RESPONSE_QUANTILE = F)
+#   index <- index + 1
+# }
+
 # Summarise outputs
 
 
@@ -262,6 +276,7 @@ saveRDS(output_df_agg_all,paste0(finalLocationDeter,"/output_df_agg.rds"))
 saveRDS(output_diseases_change,paste0(finalLocationDeter,"/output_diseases_change.rds"))
 saveRDS(output_life_expectancy_change,paste0(finalLocationDeter,"/output_life_expectancy_change.rds"))
 saveRDS(output_life_years_change,paste0(finalLocationDeter,"/output_life_years_change.rds"))
+
 
 
 
