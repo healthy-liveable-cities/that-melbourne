@@ -106,7 +106,7 @@ HALYsTable <- function(age_val,sex_val,scen_val) {
   # scen_val='all_2_10'
   dataFiltered <- output_life_years_change %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
-    mutate(across(mean:percentile975, round, digits=1)) %>%
+    mutate(across(mean:percentile975, round, digits=4)) %>%
     dplyr::select(population,measure,mean,median,percentile025,percentile975)
 }
 
