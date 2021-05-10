@@ -15,25 +15,34 @@ source("Scripts/data_prep/population_prep.R")
 # Outputs location
 
 # Working directory
-scenarioLocation <- "./scenarios"
+scenarioLocation      <- "./scenarios"
 scenarioTripsLocation <- "./scenarios/scenarioTrips"
-finalLocationProb <- "output/probabilistic/melbourne-outputs"
-finalLocationDeter <- "output/deterministic/melbourne-outputs"
+finalLocationProb     <- "output/probabilistic/melbourne-outputs"
+finalLocationDeter    <- "output/deterministic/melbourne-outputs"
 
 
 
 # Local drive-deterministic (large files)
+# outputLocationDeter        <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
+# combinedLocationDeter      <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
+# combinedLocationMMETSDeter <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
+# summarisedLocationDeter    <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
 
-outputLocationDeter <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
-combinedLocationDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
-combinedLocationMMETSDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
-summarisedLocationDeter <-  "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
+outputLocationDeter        <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-raw"
+combinedLocationDeter      <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined"
+combinedLocationMMETSDeter <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-combined-mmets"
+summarisedLocationDeter    <- "C:/home/results/scenarioTripsReplace/deterministic/melbourne-outputs-summarised"
 
 # Local drive-probabilistic (large files)
-outputLocationProb <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
-combinedLocationProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
-combinedLocationMMETSProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
-summarisedLocationProb <-  "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
+# outputLocationProb        <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
+# combinedLocationProb      <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
+# combinedLocationMMETSProb <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
+# summarisedLocationProb    <- "/home/alan/DATA/dot-hia2/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
+
+outputLocationProb        <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-raw"
+combinedLocationProb      <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined"
+combinedLocationMMETSProb <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-combined-mmets"
+summarisedLocationProb    <- "C:/home/results/scenarioTripsReplace/probabilistic/melbourne-outputs-summarised"
 
 # Create directories, in case not created yet
 
@@ -196,9 +205,23 @@ saveRDS(PA_guide_weighted, file=paste0(finalLocationDeter, "/PAallGuide.rds"))
 
 for (i in 1:nrow(scenarios_ShortTrips)){
 CalculationModel(output_location=scenarios_ShortTrips[i,]$outputLocationDeter,
-                 persons_matched=read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"), 
+                 persons_matched=scenarios_ShortTrips[i,]$scenario_location, 
                  probabilistic = F)
 }
+
+####Alan, just leaving here to check that all the persons matched files are different # Check persons_matched
+# test_list <- list()
+# index <- 1
+# cat(paste0("have set seed=", seed,"\n"))
+# for (i in 1:nrow(scenarios_ShortTrips)){
+#   test_list[[index]] <- GetParamters(
+#   NSAMPLES = 1,
+#   matched_population = scenarios_ShortTrips[i,]$scenario_location,
+#   MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
+#   MMET_WALKING = c(2.53, 1.1),
+#   PA_DOSE_RESPONSE_QUANTILE = F)
+#   index <- index + 1
+# }
 
 # Summarise outputs
 
@@ -262,6 +285,7 @@ saveRDS(output_df_agg_all,paste0(finalLocationDeter,"/output_df_agg.rds"))
 saveRDS(output_diseases_change,paste0(finalLocationDeter,"/output_diseases_change.rds"))
 saveRDS(output_life_expectancy_change,paste0(finalLocationDeter,"/output_life_expectancy_change.rds"))
 saveRDS(output_life_years_change,paste0(finalLocationDeter,"/output_life_years_change.rds"))
+
 
 
 
