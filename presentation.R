@@ -15,8 +15,11 @@ scenariosDF <- crossing(data.frame(max_walk=c(0,1,2)),
                         data.frame(max_cycle=c(0,2,5,10)),
                         data.frame(purpose=c("commuting", "all"))) %>%
   filter(max_walk!=max_cycle) %>%
-  mutate(scen=paste0(purpose,"_",max_walk,"_",max_cycle))
-
+  mutate(scen=paste0(purpose,"_",max_walk,"_",max_cycle)) %>%
+  mutate(title=paste0("Replace ", purpose, " trips ", "up to", " ", ifelse(max_walk>0, max_walk, max_cycle), "km with ",
+         ifelse(max_walk>0, "walking", "cycling"), ifelse(max_walk>0 & max_cycle>0, paste(" and between", max_walk,
+         "km and ", max_cycle, "km with cycling"), "")))
+      
 
 # Combinations age and sex for graphs and results
 age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus", "all")),
@@ -41,7 +44,8 @@ output_life_expectancy_change<-readRDS(paste0(finalLocation,"/output_life_expect
 output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_change.rds"))
 PAall<-readRDS(paste0(finalLocation,"/PAall.rds"))
 PAallGuide<-readRDS(paste0(finalLocation,"/PAallGuide.rds"))
-output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
+output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds")) %>% ## add titles
+  left_join(scenariosDF)
 
 # Function inputs select
 # age_val: "15-19"  "20-39"  "40-64"  "65plus" "all" 
