@@ -12,11 +12,12 @@ GetPopulation <- function(population_data, location){
     dplyr::select(age, sex, location) %>%
   rowwise() %>%
   dplyr::rename(population = location) %>%
-  mutate(from_age = as.numeric(str_split(age,'-')[[1]][1])) %>%
-  mutate(to_age = as.numeric(str_split(age,'-')[[1]][2])) %>%
+  dplyr::mutate(from_age = as.numeric(str_split(age,'-')[[1]][1])) %>%
+  dplyr::mutate(to_age = as.numeric(str_split(age,'-')[[1]][2])) %>%
   # using rowwise() turns the dataframe into a tibble
   data.frame() %>%
-  mutate(age_cat = from_age + 2) %>%
-  mutate(sex_age_cat = paste(tolower(sex), age_cat, sep="_")) %>%
+  dplyr::mutate(age_cat = from_age + 2) %>%
+  dplyr::mutate(sex_age_cat = paste(tolower(sex), age_cat, sep="_")) %>%
   dplyr::select(sex_age_cat, population)
-  return(population)}
+  return(population)
+  }

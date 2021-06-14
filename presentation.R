@@ -30,7 +30,7 @@ age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus"
 # Load data ---------------------------------------------------------------
 ## select folder for probabilistic or deterministic results
 ## Deterministic
-finalLocation <- "C:/Users/e95517/OneDrive - RMIT University/HIA-DoT/outputs/melbourne-outputs"
+finalLocation <- "./output/melbourne-outputs"
 
 # finalLocation <- "C:/Users/e95517/Dropbox/that-melbourne/alanoutput180421/melbourne-outputs"
 # ### Probabilistic

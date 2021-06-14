@@ -7,7 +7,7 @@ calculateMMETSperPerson <- function(matched_pop_location, MMET_CYCLING,MMET_WALK
   # 
   MMET_MOD <- 3.5 # As in meta analysis diabetes smith et al
   MMET_VIG <- 7
-  # MMET_CYCLING <- 4.63 
+  # MMET_CYCLING <- 4.63
   # MMET_WALKING <- 2.53
   # matched_pop_location <- persons_matched
   

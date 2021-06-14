@@ -35,9 +35,8 @@ auo_theme <- theme_bw() +
         panel.spacing = unit(0.8, "lines")) # use this to change the spacing between the different disease plots
 
 # ----- Change in mode of transport -----
-## TO DO: order modes from smallest to highest
 GraphsMode <- function(age_val,sex_val,purpose_val) {
-   # age_val='65plus'; sex_val='all'; purpose_val='commuting'
+   # age_val='all'; sex_val='all'; purpose_val='commuting'
 
 
   dataFiltered <- output_transport_modes %>% 
@@ -97,8 +96,8 @@ minutesTable <- function(age_val,sex_val,purpose_val) {
 # ----- Meets guidelines minutes -----
 
 minutesGuide <- function(age_val,sex_val,purpose_val) {
-  # age_val='65plus'; sex_val='all'; purpose_val='commuting'
- 
+  # age_val='all'; sex_val='all'; purpose_val='all'
+
   dataFiltered <- PAallGuide %>% 
     mutate_if(is.numeric, round, digits = 4) %>%
     dplyr::filter(age==age_val,sex==sex_val) %>%
@@ -118,8 +117,8 @@ diseasesTable <- function(age_val,sex_val,purpose_val) {
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    mutate(measure=case_when(measure=='inc_num' ~ 'Incidence',
-                             measure=='mx_num'  ~ 'Deaths')) %>%
+    mutate(measure=case_when(measure=='inc.num' ~ 'Incidence',
+                             measure=='mx.num'  ~ 'Deaths')) %>%
     filter(measure%in% c("Incidence", "Deaths")) %>%
     mutate(across(mean:percentile975, round, digits=1)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
@@ -146,7 +145,7 @@ diseasesChangeIncidenceTable <- function(age_val,sex_val,purp_val) {
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    filter(measure=="inc_percent" & scenario== "diff") %>%
+    filter(measure=="inc.percent" & scenario== "diff") %>%
     # somewhere in the scripts tablc has been mislabeled tbalct
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
@@ -155,15 +154,17 @@ diseasesChangeIncidenceTable <- function(age_val,sex_val,purp_val) {
 }
 
 # ---- Disease change incidence graph -----
-diseasesChangeIncidencePerc <- function(age_val,sex_val,purp_val) {
+diseasesChangeIncidencePerc <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
 
+  #### ADD decimals
+  
   tmpPlot <- output_diseases_change %>%
     filter(age==age_val,sex==sex_val) %>%
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    filter(measure=="inc_percent" & scenario== "diff") %>%
+    filter(measure=="inc.percent" & scenario== "diff") %>%
     # somewhere in the scripts tablc has been mislabeled tbalct
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
@@ -184,7 +185,7 @@ diseasesChangeIncidencePerc <- function(age_val,sex_val,purp_val) {
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-   labs(x="Percentage change diseases", 
+   labs(x="Percentage change incidence", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
@@ -202,7 +203,7 @@ diseasesChangeIncidencePerc <- function(age_val,sex_val,purp_val) {
   
 }
 
-diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purp_val) {
+diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
   
   tmpPlot <- output_diseases_change %>%
@@ -210,7 +211,7 @@ diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purp_val) {
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    filter(measure=="inc_num" & scenario== "diff") %>%
+    filter(measure=="inc.num" & scenario== "diff") %>%
     # somewhere in the scripts tablc has been mislabeled tbalct
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
@@ -226,7 +227,7 @@ diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purp_val) {
   ggplot(tmpPlot, aes(x=median, y=disease)) +
     geom_bar(stat="identity", color=NA, fill="#EC4497", # AUO pink
              position=position_dodge()) +
-    labs(x="Prevented new cases of disease") +
+    labs(x="Change incidence") +
     geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
     scale_x_continuous(labels = scales::comma, 
                        breaks = waiver(),
@@ -249,7 +250,7 @@ diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purp_val) {
           strip.text = element_text(size=12))
 }
 # ---- Disease change deaths graph -----
-diseasesChangeDeathsPerc <- function(age_val,sex_val,purp_val) {
+diseasesChangeDeathsPerc <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
 
   tmpPlot <- output_diseases_change %>%
@@ -257,7 +258,7 @@ diseasesChangeDeathsPerc <- function(age_val,sex_val,purp_val) {
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    filter(measure=="mx_percent" & scenario== "diff") %>%
+    filter(measure=="mx.percent" & scenario== "diff") %>%
     # somewhere in the scripts tablc has been mislabeled tbalct
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
@@ -296,7 +297,7 @@ diseasesChangeDeathsPerc <- function(age_val,sex_val,purp_val) {
   
 }
 
-diseasesChangeDeathsNumbers <- function(age_val,sex_val,purp_val) {
+diseasesChangeDeathsNumbers <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
   
   tmpPlot <- output_diseases_change %>%
@@ -304,12 +305,12 @@ diseasesChangeDeathsNumbers <- function(age_val,sex_val,purp_val) {
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
     dplyr::filter(purpose==purpose_val) %>%
-    filter(measure=="mx_num" & scenario== "diff") %>%
+    filter(measure=="mx.num" & scenario== "diff") %>%
     # somewhere in the scripts tablc has been mislabeled tbalct
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
     mutate(across(median:percentile975, round, digits=3)) %>%
-    dplyr::select(disease,median,percentile025,percentile975, title1, age, sex, purpose, max_walk, max_cycle, scen_order)%>%
+    dplyr::select(disease,median,percentile025,percentile975, title1, age, sex, purpose, max_walk, max_cycle, scen_order, population)%>%
     mutate(age=ifelse(age=="all", "all age groups", age),
            sex=ifelse(sex=="all", "females and males", sex), 
            sex=ifelse(sex=="male", "males", sex), 
@@ -329,8 +330,11 @@ diseasesChangeDeathsNumbers <- function(age_val,sex_val,purp_val) {
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    ggtitle(paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
+    labs(x="Deaths prevented",  
+         title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
+          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
           axis.text=element_text(size=10),
           axis.title=element_text(size=10),
           axis.title.y=element_blank(),
@@ -347,9 +351,10 @@ diseasesChangeDeathsNumbers <- function(age_val,sex_val,purp_val) {
 
 ### Change colors, darker and thicker
 
-incidenceDiseasesGraph <- function(age_val,sex_val,purp_val) {
+incidenceDiseasesGraph <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
   
+ 
   tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val) %>% #, disease==disease_val) %>%
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
@@ -388,12 +393,12 @@ incidenceDiseasesGraph <- function(age_val,sex_val,purp_val) {
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
     labs(x="Years since scenario commenced", y="Incidence", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
-         subtitle = "Change in incidence over time")+
+         subtitle = paste0("Change in incidence over time")) +
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    ggtitle(label=paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
     theme(plot.title=element_text(size=12, hjust = 0.5),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
           axis.text=element_text(size=10),
           axis.title=element_text(size=10),
           axis.title.y=element_blank(),
@@ -403,12 +408,11 @@ incidenceDiseasesGraph <- function(age_val,sex_val,purp_val) {
           legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12), 
-          plot.subtitle =element_text(size=12, hjust = 0.5))
+          strip.text = element_text(size=12))
 }
 
 # ---- Disease change mortality over time graph -----
-mortalityDiseasesGraph <- function(age_val,sex_val,purp_val) {
+mortalityDiseasesGraph <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
 
   tmpPlot <- output_df_agg_all %>%
@@ -446,15 +450,15 @@ mortalityDiseasesGraph <- function(age_val,sex_val,purp_val) {
       minor_breaks = NULL,
       n.breaks = 5,
       labels = waiver()) +
-    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
+    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0))+
     labs(x="Years since scenario commenced", y="Incidence", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
-         subtitle = "Change in deaths over time")+
+         subtitle = paste0("Change in incidence over time"))+
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    ggtitle(label=paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
     theme(plot.title=element_text(size=12, hjust = 0.5),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
           axis.text=element_text(size=10),
           axis.title=element_text(size=10),
           axis.title.y=element_blank(),
@@ -464,8 +468,7 @@ mortalityDiseasesGraph <- function(age_val,sex_val,purp_val) {
           legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12), 
-          plot.subtitle =element_text(size=12, hjust = 0.5))
+          strip.text = element_text(size=12))
 }
 
 
@@ -505,11 +508,15 @@ halyGraph <- function(age_val,sex_val,purpose_val) {
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
     labs(x="Years since scenario commenced", y="Health-adjusted life years") +
+    # subtitle =  paste0(unique(tmpPlot$population)) +
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    ggtitle(label=paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
+    labs(x="Years since scenario commenced", y="Incidence", 
+         title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
+         subtitle = paste0("Change in incidence over time"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
           axis.text=element_text(size=10),
           axis.title=element_text(size=10),
           axis.title.y=element_blank(),
@@ -519,12 +526,11 @@ halyGraph <- function(age_val,sex_val,purpose_val) {
           legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12), 
-          plot.subtitle =element_text(size=12, hjust = 0.5))
+          strip.text = element_text(size=12))
 }
 
 
-lyGraph <- function(age_val,sex_val,scen_val) {
+lyGraph <- function(age_val,sex_val,purpose_val) {
   # age_val='all'; sex_val='all'; purpose_val='all'
   tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,purpose==purpose_val) %>%
@@ -558,12 +564,16 @@ lyGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 5,
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
-    labs(x="Years since scenario commenced", y="Llife years") +
+    labs(x="Years since scenario commenced", y="Life years") +
+    # subtitle =  paste0(unique(tmpPlot$population)) +
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    ggtitle(label=paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
+    labs(x="Years since scenario commenced", y="Life years", 
+         title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
+         subtitle = paste0("Change in incidence over time"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
           axis.text=element_text(size=10),
           axis.title=element_text(size=10),
           axis.title.y=element_blank(),
@@ -573,6 +583,5 @@ lyGraph <- function(age_val,sex_val,scen_val) {
           legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12), 
-          plot.subtitle =element_text(size=12, hjust = 0.5))
+          strip.text = element_text(size=12))
 }

@@ -455,10 +455,11 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
                                  age >= 80 & age <=  84 & sex == "female" ~ 28,
                                  age >= 85 & age <=  89 & sex == "female" ~ 30,
                                  age >= 90 & age <=  94 & sex == "female" ~ 32,
-                                 age >= 95 & age <= 120 & sex == "female" ~ 34)) %>%
+                                 age >= 95 & age <= 120 & sex == "female" ~ 34))%>%
+    dplyr::rename(participant_wt = participant_wt.x)
     
     ### participant_w present in both PA and travel data frame, we are inteterested in the travel weights
-    rename(participant_wt = participant_wt.x)
+    
   
   ### Select variables ### Keep participant_wt for travel survey
   
