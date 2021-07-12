@@ -184,27 +184,27 @@ results <- for(seed_current in 1:NSAMPLES){
 }
 
 ## Comment out parallel loop
-results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:% 
-          
-            foreach::foreach(i=1:nrow(scenarios_ShortTrips),
-                             .combine=rbind,
-                             .verbose=F,
-                             .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
-                             .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr",
-                                       "PA_dose_response", "health_burden_2","RunDisease","RunLifeTable")
-  ) %dopar% {
-    for(p in 1:length(parameters))
-     assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1) 
-    
-    if (file.exists(scenarios_ShortTrips[i,]$scenario_location))
-      CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
-                     persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
-    
-    end_time = Sys.time()
-    end_time - start_time
-    stopCluster(cl)
-    # cat(paste0("\n scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
-  }
+# results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:% 
+#           
+#             foreach::foreach(i=1:nrow(scenarios_ShortTrips),
+#                              .combine=rbind,
+#                              .verbose=F,
+#                              .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
+#                              .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr",
+#                                        "PA_dose_response", "health_burden_2","RunDisease","RunLifeTable")
+#   ) %dopar% {
+#     for(p in 1:length(parameters))
+#      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1) 
+#     
+#     if (file.exists(scenarios_ShortTrips[i,]$scenario_location))
+#       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
+#                      persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+#     
+#     end_time = Sys.time()
+#     end_time - start_time
+#     stopCluster(cl)
+#     # cat(paste0("\n scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
+#   }
 
 ### Run one sceanario at the time to see if the nested loop is the problem
 
