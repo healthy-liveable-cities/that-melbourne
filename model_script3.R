@@ -22,14 +22,17 @@ scenarioLocation      <- "./scenarios"
 scenarioTripsLocation <- "./scenarios/scenarioTrips"
 finalLocation     <- "output/melbourne-outputs"
 
+# Local path to result folder
+local_dir_path <- "C:/home/"
+
 # Local drive-results (large files)
 
-outputLocation       <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-raw"
-combinedLocationDisease     <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/disease"
-combinedLocationLifeYears <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears"
-combineLocationOutputAgg <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg"
-# combinedLocationMMETS <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-combined-mmets"
-# summarisedLocation    <- "C:/home/results/scenarioTripsReplace/melbourne-outputs-summarised"
+outputLocation       <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-raw")
+combinedLocationDisease     <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/disease")
+combinedLocationLifeYears <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears")
+combineLocationOutputAgg <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg")
+# combinedLocationMMETS <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined-mmets")
+# summarisedLocation    <- paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-summarised")
 
 
 # Create directories, in case not created yet
@@ -164,6 +167,23 @@ seeds<- 1:NSAMPLES
 registerDoParallel(cl)
 start_time = Sys.time()
 
+## non-parallel implementation of outputs
+results <- for(seed_current in 1:NSAMPLES){
+  for(i in 1:nrow(scenarios_ShortTrips)){
+
+    for(p in 1:length(parameters))
+      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
+
+    if (file.exists(scenarios_ShortTrips[i,]$scenario_location)){
+      print(scenarios_ShortTrips[i,]$scenario_location)
+      CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
+                     persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+    }
+
+  }
+}
+
+## Comment out parallel loop
 results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:% 
           
             foreach::foreach(i=1:nrow(scenarios_ShortTrips),
@@ -176,7 +196,8 @@ results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
     for(p in 1:length(parameters))
      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1) 
     
-    CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
+    if (file.exists(scenarios_ShortTrips[i,]$scenario_location))
+      CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
                      persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
     
     end_time = Sys.time()
@@ -237,13 +258,13 @@ for (i in 1:nrow(scenarios_ShortTrips)){
 
 # Calculate statistics outputs
 
-output_diseases_change <- CalculateDisease(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/disease")
-output_life_years_change <- CalculateLifeYears(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears") 
+output_diseases_change <- CalculateDisease(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/disease"))
+output_life_years_change <- CalculateLifeYears(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears")) 
 ## To large, split in 5 sceanrios in 4 folder (I created the 5 folder manually, step above saves them all in one location)
-output_df_agg1 <- CalculateOutputAgg(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg1")
-output_df_agg2 <- CalculateOutputAgg(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg2")
-output_df_agg3 <- CalculateOutputAgg(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg3")
-output_df_agg4 <- CalculateOutputAgg(inputDirectory="C:/home/results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg4")
+output_df_agg1 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg1"))
+output_df_agg2 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg2"))
+output_df_agg3 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg3"))
+output_df_agg4 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg4"))
 
 ## Combine in single dataset
 output_df_agg <- bind_rows(output_df_agg1, output_df_agg2, output_df_agg3, output_df_agg4)
