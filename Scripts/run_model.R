@@ -39,6 +39,8 @@ gen_pa_rr <- function(mmets_pp) {
     pa_dn <- as.character(DISEASE_INVENTORY$pa_acronym[j])
     pa_n <- as.character(DISEASE_INVENTORY$acronym[j])
     return_vector <- PA_dose_response(cause = pa_dn, dose = doses_vector)
+    print(paste("index: ", which(parameters[[paste0("PA_DOSE_RESPONSE_QUANTILE_", pa_dn)]] == get(paste0("PA_DOSE_RESPONSE_QUANTILE_", 
+                                                                                                         pa_dn))), " for ", pa_dn))
     for (i in 1:length(SCEN_SHORT_NAME)) {
       scen <- SCEN_SHORT_NAME[i]
       mmets_pp[[paste("RR_pa", scen, pa_n, sep = "_")]] <- return_vector$rr[(1 + (i - 1) * nrow(mmets_pp)):(i * nrow(mmets_pp))]
