@@ -2,7 +2,7 @@ rm (list = ls())
 
 
 # ---- Get libraries ----
-
+library(plyr)
 library(dplyr)
 library(tidyr)
 library(readr)
@@ -12,7 +12,12 @@ library(stringr)
 library(doParallel)
 library(ParallelLogger)
 library(ithimr)
-library(plyr)
+
+library(devtools)
+
+# devtools::install_github("ITHIM/ITHIM-R")
+# 
+# install_github('nathanvan/parallelsugar')
 
 # ---- Create directories -----
 
@@ -68,6 +73,21 @@ scenarios_ShortTrips <- crossing(data.frame(max_walk=maxDistanceWalk),
   mutate(trips_location=paste0(scenarioTripsLocation,"/",scenario,".csv")) %>%
   mutate(output_location=paste0(outputLocation,"/",scenario))
 
+# # ---- Generate persons_matched --- BZ-D: Just run once, already saved in sceanrios
+# source("Scripts/functions_tripsReplace.R")
+# source("Scripts/data_prep/synthetic_pop.R")
+# 
+# for (i in 1:nrow(scenarios_ShortTrips)){
+#   generateMatchedPopulationScenario(
+#     output_location="./scenarios",
+#     scenario_name=scenarios_ShortTrips[i,]$scenario,
+#     in_data="./Data/processed/trips_melbourne.csv",
+#     max_walk=scenarios_ShortTrips[i,]$max_walk,
+#     max_cycle=scenarios_ShortTrips[i,]$max_cycle,
+#     purpose=scenarios_ShortTrips[i,]$purpose_full
+#   )
+#   cat(paste0("\n scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
+# }
 
 # ---- Functions to run model ----
 source("Scripts/data_prep/mmet_pp.R")
@@ -142,46 +162,45 @@ DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
 # --- Parameters ----
 
 NSAMPLES <<-10
-PA_DOSE_RESPONSE_QUANTILE <-T
+PA_DOSE_RESPONSE_QUANTILE<<-T
 
 
-parameters <-  GetParameters(
-  NSAMPLES=10,
+parameters  <<- GetParameters(
   MMET_CYCLING=5.8,
   MMET_WALKING=2.5,
   DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), ### issue when using parameters for uncertainty
   DIABETES_STROKE_RR_F=c(2.28, 1.93, 2.69),
   DIABETES_IHD_RR_M=c(2.16, 1.82, 2.56),
-  DIABETES_STROKE_RR_M=c(1.83, 1.60, 2.08),
-  PA_DOSE_RESPONSE_QUANTILE=T)
+  DIABETES_STROKE_RR_M=c(1.83, 1.60, 2.08))
 
 
 # ---- Run model ----
 
 
-print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
+# print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
 number_cores <- max(1,floor(as.integer(detectCores())*0.8))
-cl <- makeCluster(number_cores)
-cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
-seeds<- 1:NSAMPLES
-registerDoParallel(cl)
-start_time = Sys.time()
+# cl <- makeCluster(number_cores)
+# cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
+# seeds<- 1:NSAMPLES
+# registerDoParallel(cl)
+# start_time = Sys.time()
 
 ## non-parallel implementation of outputs
 results <- for(seed_current in 1:NSAMPLES){
   for(i in 1:nrow(scenarios_ShortTrips)){
-
+    
     for(p in 1:length(parameters))
       assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
-
+    
     if (file.exists(scenarios_ShortTrips[i,]$scenario_location)){
       print(scenarios_ShortTrips[i,]$scenario_location)
       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
-                     persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+                       persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
     }
-
+    
   }
 }
+
 
 ## Comment out parallel loop
 # results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:% 

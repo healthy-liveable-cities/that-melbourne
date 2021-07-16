@@ -6,7 +6,9 @@ library(readr)
 
 # Read file
 # Belen, you may need to tweak the path according to your directory structure
-X1 <- read_csv("results/scenarioTripsReplace/melbourne-outputs-raw/all_2_0/mmets/1.csv")
+# X1 <- read_csv("results/scenarioTripsReplace/melbourne-outputs-raw/all_2_0/mmets/2.csv")
+X1 <- outputLocation <- read_csv(paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-raw/all_0_5/mmets/5.csv"))
+
 
 # Loop through all diseases for PA
 for (dis in DISEASE_INVENTORY %>% filter(physical_activity == 1) %>% dplyr::select(acronym) %>% unlist() %>% as.character()){
@@ -38,3 +40,15 @@ for (dis in DISEASE_INVENTORY %>% filter(physical_activity == 1) %>% dplyr::sele
 # [1] "breast 0"
 # [1] "colon 0"
 # [1] "endo 0"
+
+
+## My results, still inconsistency
+# [1] "ac 0"
+# [1] "ihd 0"
+# [1] "neo 115"
+# [1] "lc 0"
+# [1] "stroke 0"
+# [1] "t2d 0"
+# [1] "breast 0"
+# [1] "colon 0"
+# [1] "endo 3"
