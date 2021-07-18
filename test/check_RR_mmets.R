@@ -4,10 +4,14 @@
 # Load library
 library(readr)
 
+
+ # "all_0_2"        "commuting_0_2"  "all_0_5"        "commuting_0_5"  "all_0_10"       "commuting_0_10" "all_1_0"        "commuting_1_0" 
+ # "all_1_2"        "commuting_1_2"  "all_1_5"        "commuting_1_5"  "all_1_10"       "commuting_1_10" "all_2_0"        "commuting_2_0" 
+ #  "all_2_5"        "commuting_2_5"  "all_2_10"       "commuting_2_10"
 # Read file
 # Belen, you may need to tweak the path according to your directory structure
 # X1 <- read_csv("results/scenarioTripsReplace/melbourne-outputs-raw/all_2_0/mmets/2.csv")
-X1 <- outputLocation <- read_csv(paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-raw/all_0_5/mmets/5.csv"))
+X1 <- outputLocation <- read_csv(paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-raw/commuting_2_0/mmets/1.csv"))
 
 
 # Loop through all diseases for PA
