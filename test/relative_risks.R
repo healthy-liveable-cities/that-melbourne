@@ -1,0 +1,131 @@
+### Derive distributions for RRs
+
+
+rm (list = ls())
+
+library(dplyr)
+library(tidyr)
+library(readr)
+
+
+### Get parameters
+source("Scripts/run_model.R")
+disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
+
+
+### RRs PA
+dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
+                            "/dose_response/drpa/extdata")
+
+list_of_files <<- list.files(path=dose_response_folder, recursive=TRUE,
+                             pattern="\\.csv$", full.names=TRUE)
+for (i in 1:length(list_of_files)){
+  assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
+         readr::read_csv(list_of_files[[i]],col_types = cols()),
+         pos = 1)
+}
+
+### Get parameters
+
+NSAMPLES<<- 2000
+PA_DOSE_RESPONSE_QUANTILE <<- T
+
+
+parameters  <<-  GetParameters(
+  MMET_CYCLING=5.8,
+  MMET_WALKING=2.5,
+  DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), ### issue when using parameters for uncertainty
+  DIABETES_STROKE_RR_F=c(2.28, 1.93, 2.69),
+  DIABETES_IHD_RR_M=c(2.16, 1.82, 2.56),
+  DIABETES_STROKE_RR_M=c(1.83, 1.60, 2.08))
+
+### Function to calculate quantiles RRs
+calculate_distributions <- function(data, relative_risk) {
+  
+  # 
+  # data=coronary_heart_disease_mortality
+  # relative_risk="coronary_heart_disease"
+
+  rr_values <- parameters[[paste0("PA_DOSE_RESPONSE_QUANTILE_", relative_risk)]]
+
+  rr_list <- list()
+  
+  index <- 1
+  
+  
+  for(d in  1:length(rr_values)){
+    
+    rr_list[[index]]  <- data %>%  
+      dplyr::mutate(UQ(sym(paste0("RR_",d))) := qnorm(rr_values[d], RR, (ub-lb)/1.96)) %>% 
+      dplyr::mutate(UQ(sym(paste0("Diff_RR",d))) := UQ(sym(paste0("RR_",d))) - 
+               lag(UQ(sym(paste0("RR_",d))), 
+                   default = first(UQ(sym(paste0("RR_",d)))))) %>%
+      dplyr::mutate(name=paste0(relative_risk))
+    
+  
+    index <-  index + 1
+    
+  }   
+return(rr_list=rr_list)
+}
+
+### Calculate RRs for all diseases
+
+
+### Function to plot RRs
+
+library(plyr)
+library(ggplot2)
+
+plot_rr <- function(data) {
+  
+  # data=rr_list
+  
+  
+  relative_risks <- plyr::join_all(data) 
+  
+  name <- unique(relative_risks$name)
+  
+  write.csv(relative_risks, file=paste0("./test/",name, ".csv"))      
+  
+  data_long <-relative_risks %>%
+    dplyr::select(dose, RR, lb, ub, starts_with("RR")) %>%
+    pivot_longer(cols = RR_1:paste0("RR_", NSAMPLES),
+                 names_to = "rr",
+                 values_to = "value")
+  
+  ggplot(data=data_long,
+         aes(x=dose, y=value, linetype=rr)) +
+    geom_line() +
+    theme(legend.position = "none")
+  
+  ggplot2::ggsave(paste0("./test", "/", name, ".png"))
+  
+}
+
+### Do calculations for all diseases
+
+coronary_list <- calculate_distributions(coronary_heart_disease_mortality, "coronary_heart_disease")
+plot_coronary <- plot_rr(coronary_list)
+
+b_cancer_list <- calculate_distributions(breast_cancer_all, "breast_cancer")
+plot_b_cancer <- plot_rr(b_cancer_list)
+
+c_cancer_list <- calculate_distributions(colon_cancer_all, "colon_cancer")
+plot_c_cancer <- plot_rr(c_cancer_list)
+
+e_cancer_list <- calculate_distributions(endometrial_cancer_all, "endometrial_cancer")
+plot_e_cancer <- plot_rr(e_cancer_list)
+
+l_cancer_list <- calculate_distributions(lung_cancer_all, "lung_cancer")
+plot_l_cancer <- plot_rr(l_cancer_list)
+
+stroke_list<- calculate_distributions(stroke_mortality, "stroke")
+plot_stroke <- plot_rr(stroke_list)
+
+diabetes_list<- calculate_distributions(diabetes_mortality, "diabetes")
+plot_diabetes <- plot_rr(diabetes_list)
+
+
+
