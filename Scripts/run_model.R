@@ -30,21 +30,20 @@ gen_pa_rr <- function(mmets_pp) {
   SCEN_SHORT_NAME <- colnames(mmets_pp)[grep("mmet",colnames(mmets_pp))]
   # removing '_mmet' to find the base scenario and scenario names
   SCEN_SHORT_NAME <- gsub("_mmet","",SCEN_SHORT_NAME)
-  dose_columns <- match(paste0(SCEN_SHORT_NAME, '_mmet'),colnames(mmets_pp))
-  doses_vector <- unlist(data.frame(mmets_pp[,dose_columns]))
-  for ( j in c(1:nrow(DISEASE_INVENTORY))[DISEASE_INVENTORY$physical_activity == 1]){
-    # get name of PA DR curve
+  
+  dose_columns <- match(paste0(SCEN_SHORT_NAME, "_mmet"), 
+                        colnames(mmets_pp))
+  doses_vector <- unlist(data.frame(mmets_pp[, dose_columns]))
+  for (j in c(1:nrow(DISEASE_INVENTORY))[DISEASE_INVENTORY$physical_activity == 
+                                         1]) {
     pa_dn <- as.character(DISEASE_INVENTORY$pa_acronym[j])
-    # get name of disease
     pa_n <- as.character(DISEASE_INVENTORY$acronym[j])
-    ##RJ apply PA DR function to all doses as one long vector
-    return_vector <- PA_dose_response(cause = pa_dn,dose = doses_vector)
+    return_vector <- PA_dose_response(cause = pa_dn, dose = doses_vector)
     print(paste("index: ", which(parameters[[paste0("PA_DOSE_RESPONSE_QUANTILE_", pa_dn)]] == get(paste0("PA_DOSE_RESPONSE_QUANTILE_", 
                                                                                                          pa_dn))), " for ", pa_dn))
-    ##RJ take segments of returned vector corresponding to scenario
-    for (i in 1:length(SCEN_SHORT_NAME)){
+    for (i in 1:length(SCEN_SHORT_NAME)) {
       scen <- SCEN_SHORT_NAME[i]
-      mmets_pp[[paste('RR_pa', scen, pa_n, sep = '_')]] <- return_vector$rr[(1+(i-1)*nrow(mmets_pp)):(i*nrow(mmets_pp))]
+      mmets_pp[[paste("RR_pa", scen, pa_n, sep = "_")]] <- return_vector$rr[(1 + (i - 1) * nrow(mmets_pp)):(i * nrow(mmets_pp))]
     }
   }
   mmets_pp
@@ -52,8 +51,8 @@ gen_pa_rr <- function(mmets_pp) {
 
 PA_dose_response <- function(cause, dose, confidence_intervals = F) {
   
-  list_of_files <- list.files(path=dose_response_folder, recursive=TRUE,
-                              pattern="\\.csv$", full.names=TRUE)
+  # list_of_files <- list.files(path=dose_response_folder, recursive=TRUE,
+  #                             pattern="\\.csv$", full.names=TRUE)
   for (i in 1:length(list_of_files)){
     assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
            readr::read_csv(list_of_files[[i]],col_types = cols()),
@@ -82,18 +81,28 @@ PA_dose_response <- function(cause, dose, confidence_intervals = F) {
   fname <- paste(cause, outcome_type, sep = "_")
   lookup_table <- get(fname)
   lookup_df <- setDT(lookup_table)
-  rr <- approx(x = lookup_df$dose, y = lookup_df$RR, xout = dose, 
-               yleft = 1, yright = min(lookup_df$RR))$y
-  if (confidence_intervals || PA_DOSE_RESPONSE_QUANTILE == 
-      T) {
-    lb <- approx(x = lookup_df$dose, y = lookup_df$lb, xout = dose, 
-                 yleft = 1, yright = min(lookup_df$lb))$y
-    ub <- approx(x = lookup_df$dose, y = lookup_df$ub, xout = dose, 
-                 yleft = 1, yright = min(lookup_df$ub))$y
+  rr <- approx(x=lookup_df$dose,y=lookup_df$RR,xout=dose,yleft=1,yright=min(lookup_df$RR))$y
+  if (confidence_intervals || PA_DOSE_RESPONSE_QUANTILE==T) {
+    lb <-
+      approx(
+        x = lookup_df$dose,
+        y = lookup_df$lb,
+        xout = dose,
+        yleft = 1,
+        yright = min(lookup_df$lb)
+      )$y
+    ub <-
+      approx(
+        x = lookup_df$dose,
+        y = lookup_df$ub,
+        xout = dose,
+        yleft = 1,
+        yright = min(lookup_df$ub)
+      )$y
   }
   if (PA_DOSE_RESPONSE_QUANTILE == T) {
-    rr <- qnorm(get(paste0("PA_DOSE_RESPONSE_QUANTILE_", 
-                           cause)), mean = rr, sd = (ub - lb)/1.96)
+    set.seed(1)
+    rr <- qnorm(get(paste0("PA_DOSE_RESPONSE_QUANTILE_", cause)), mean = rr, sd = (ub - lb)/1.96)
     rr[rr < 0] <- 0
   }
   if (confidence_intervals) {
@@ -103,6 +112,9 @@ PA_dose_response <- function(cause, dose, confidence_intervals = F) {
     return(data.frame(rr = rr))
   }
 }
+
+
+
 
 # if mmets_pp_location is a file location, read the csv. If not, then
 # use it as a dataframe.
