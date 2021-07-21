@@ -164,7 +164,7 @@ plot_sd_diabetes <- plot_sd(diabetes_mortality, "diabetes")
 
 
 ### Check examples with problems (change value of q in qnorm (first value) and rr2 for higher dose is lower than rr1)
-# Breast cancer (test dose 5 and 10 as in graph, for some of the curves, dose 5 has a lower rr than dose 10)
+# Breast cancer 
 #dose 0.04487487
 rr_1=qnorm(0.90, 0.9997002, (1.0000030-0.9993976)/1.96) #sd=0.0006054
 #dose 0.17949950
