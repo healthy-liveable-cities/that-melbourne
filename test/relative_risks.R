@@ -104,28 +104,71 @@ plot_rr <- function(data) {
   
 }
 
+
+## Plot sd
+
+plot_sd <- function(data, name) {
+  
+  # data=coronary_heart_disease_mortality
+  # name="coronary_heart_disease"
+  
+  
+  relative_risks <- data %>%
+    mutate(sd=(ub-lb)/1.96,
+           name=name) %>%
+    dplyr::select(dose, sd, name)
+  
+  name <- unique(relative_risks$name)
+
+
+  
+  ggplot(data=relative_risks,
+         aes(x=dose, y=sd)) +
+    geom_line() +
+    theme(legend.position = "none")
+  
+  ggplot2::ggsave(paste0("./test", "/", name, "_sd", ".png"))
+  
+}
 ### Do calculations for all diseases
 
 coronary_list <- calculate_distributions(coronary_heart_disease_mortality, "coronary_heart_disease")
 plot_coronary <- plot_rr(coronary_list)
+plot_sd_coronary <- plot_sd(coronary_heart_disease_mortality, "coronary_heart_disease")
 
 b_cancer_list <- calculate_distributions(breast_cancer_all, "breast_cancer")
 plot_b_cancer <- plot_rr(b_cancer_list)
+plot_sd_breast <- plot_sd(breast_cancer_all, "breast_cancer")
 
 c_cancer_list <- calculate_distributions(colon_cancer_all, "colon_cancer")
 plot_c_cancer <- plot_rr(c_cancer_list)
+plot_sd_colon <- plot_sd(colon_cancer_all, "colon_cancer")
 
 e_cancer_list <- calculate_distributions(endometrial_cancer_all, "endometrial_cancer")
 plot_e_cancer <- plot_rr(e_cancer_list)
+plot_sd_endo <- plot_sd(endometrial_cancer_all, "endometrial_cancer")
 
 l_cancer_list <- calculate_distributions(lung_cancer_all, "lung_cancer")
 plot_l_cancer <- plot_rr(l_cancer_list)
+plot_sd_lung<- plot_sd(lung_cancer_all, "lung_cancer")
 
 stroke_list<- calculate_distributions(stroke_mortality, "stroke")
 plot_stroke <- plot_rr(stroke_list)
+plot_sd_stroke <- plot_sd(stroke_mortality, "stroke")
 
 diabetes_list<- calculate_distributions(diabetes_mortality, "diabetes")
 plot_diabetes <- plot_rr(diabetes_list)
+plot_sd_diabetes <- plot_sd(diabetes_mortality, "diabetes")
 
 
 
+
+### Check examples with problems (change value of q in qnorm (first value) and rr2 for higher dose is lower than rr1)
+# Breast cancer (test dose 5 and 10 as in graph, for some of the curves, dose 5 has a lower rr than dose 10)
+#dose 0.04487487
+rr_1=qnorm(0.90, 0.9997002, (1.0000030-0.9993976)/1.96) #sd=0.0006054
+#dose 0.17949950
+rr_2=qnorm(0.90, 0.9988014, (1.0000118-0.9975926)/1.96) #sd=0.0024192
+
+rr_1
+rr_2
