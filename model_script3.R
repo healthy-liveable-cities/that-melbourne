@@ -161,11 +161,11 @@ DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
 
 # --- Parameters ----
 
-NSAMPLES <<-10
-PA_DOSE_RESPONSE_QUANTILE<<-T
+NSAMPLES<<- 1000
+PA_DOSE_RESPONSE_QUANTILE <<- T
 
 
-parameters  <<- GetParameters(
+parameters  <<-  GetParameters(
   MMET_CYCLING=5.8,
   MMET_WALKING=2.5,
   DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), ### issue when using parameters for uncertainty
@@ -176,9 +176,9 @@ parameters  <<- GetParameters(
 
 # ---- Run model ----
 
-
+ 
 # print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
-number_cores <- max(1,floor(as.integer(detectCores())*0.8))
+# number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 # cl <- makeCluster(number_cores)
 # cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 # seeds<- 1:NSAMPLES
@@ -186,7 +186,7 @@ number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 # start_time = Sys.time()
 
 ## non-parallel implementation of outputs
-results <- for(seed_current in 1:NSAMPLES){
+results <- for(seed_current in 965:NSAMPLES){
   for(i in 1:nrow(scenarios_ShortTrips)){
     
     for(p in 1:length(parameters))
@@ -226,28 +226,28 @@ results <- for(seed_current in 1:NSAMPLES){
 #   }
 
 ### Run one sceanario at the time to see if the nested loop is the problem
-
-
-print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
-number_cores <- max(1,floor(as.integer(detectCores())*0.8))
-cl <- makeCluster(number_cores)
-cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
-seeds<- 1:NSAMPLES
-registerDoParallel(cl)
-start_time = Sys.time()
-
-results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %dopar% {
-    for(p in 1:length(parameters))
-      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1) 
-    
-    CalculationModel(output_location=scenarios_ShortTrips[1,]$output_location,
-                     persons_matched= read.csv(scenarios_ShortTrips[1,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
-    
-    end_time = Sys.time()
-    end_time - start_time
-    stopCluster(cl)
-    # cat(paste0("\n scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
-  }
+# 
+# 
+# print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
+# number_cores <- max(1,floor(as.integer(detectCores())*0.8))
+# cl <- makeCluster(number_cores)
+# cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
+# seeds<- 1:NSAMPLES
+# registerDoParallel(cl)
+# start_time = Sys.time()
+# 
+# results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %dopar% {
+#     for(p in 1:length(parameters))
+#       assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1) 
+#     
+#     CalculationModel(output_location=scenarios_ShortTrips[1,]$output_location,
+#                      persons_matched= read.csv(scenarios_ShortTrips[1,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+#     
+#     end_time = Sys.time()
+#     end_time - start_time
+#     stopCluster(cl)
+#     # cat(paste0("\n scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
+#   }
 
 # ---- Summarize results ---------------
 
@@ -279,19 +279,22 @@ for (i in 1:nrow(scenarios_ShortTrips)){
 
 output_diseases_change <- CalculateDisease(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/disease"))
 output_life_years_change <- CalculateLifeYears(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears")) 
-## To large, split in 5 sceanrios in 4 folder (I created the 5 folder manually, step above saves them all in one location)
-output_df_agg1 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg1"))
-output_df_agg2 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg2"))
-output_df_agg3 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg3"))
-output_df_agg4 <- CalculateOutputAgg(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg4"))
+## To large, do list and then append list
+index <- 1
+list_output_agg <- list()
+for (i in 1:nrow(scenarios_ShortTrips)) {
+list_output_agg[[index]] <- CalculateOutputAgg(paste0(local_dir_path, 
+                  "results/scenarioTripsReplace/melbourne-outputs-combined/OutputAgg/", scenarios_ShortTrips[i,]$scenario, ".rds"))
+index <- index + 1
+}
 
-## Combine in single dataset
-output_df_agg <- bind_rows(output_df_agg1, output_df_agg2, output_df_agg3, output_df_agg4)
 
+output_df_agg <- do.call(rbind.data.frame, list_output_agg)
+  
 # Save results
 saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change.rds"))
 saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change.rds"))
-saveRDS(output_df_agg,paste0(finalLocation,"/output_df_agg.rds"))
+saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg.rds"))
 
 
 
