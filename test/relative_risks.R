@@ -202,6 +202,9 @@ nsamples <- 100
 parameters <- ithimr::ithim_setup_parameters(NSAMPLES=nsamples,
                                              PA_DOSE_RESPONSE_QUANTILE=T)
 
+parameters$PA_DOSE_RESPONSE_QUANTILE_endometrial_cancer <- runif(nsamples, 0.3, 0.7)
+parameters$PA_DOSE_RESPONSE_QUANTILE_breast_cancer <- runif(nsamples, 0.3, 0.7)
+
 spl_cause <- list()
 pdf('test/PA_dose_response_sample.pdf',width=11,height=11)
 par(mar=c(5,5,2,1),mfrow=c(3,3))
