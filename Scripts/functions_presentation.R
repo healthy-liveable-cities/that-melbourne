@@ -12,7 +12,7 @@ library(forcats)
 # Graphs general inputs
 diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
-                   "Ischemic heart\ndisease","Stroke","Lung cancer",
+                   "Ischemic heart disease","Stroke","Lung cancer",
                    "Uterine cancer")
 
 scen.lab <- c("1km \u2265 walking","2km \u2265 walking","2km \u2265 cycling", "5km \u2265 cycling","10km \u2265 cycling",
@@ -190,16 +190,16 @@ diseasesChangeIncidencePerc <- function(age_val,sex_val,purpose_val) {
          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
           plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
   
 }
 
@@ -238,16 +238,17 @@ diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purpose_val) {
     theme(legend.position = "none") +
     ggtitle(paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
     theme(plot.title=element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          plot.subtitle = element_text(size=12, hjust = 0.5),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
 }
 # ---- Disease change deaths graph -----
 diseasesChangeDeathsPerc <- function(age_val,sex_val,purpose_val) {
@@ -284,16 +285,16 @@ diseasesChangeDeathsPerc <- function(age_val,sex_val,purpose_val) {
          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
           plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
   
 }
 
@@ -335,16 +336,16 @@ diseasesChangeDeathsNumbers <- function(age_val,sex_val,purpose_val) {
           subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
     theme(plot.title=element_text(size=12, hjust = 0.5),
           plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
 }
 
 # ---- Disease change incidence over time graph -----
@@ -399,16 +400,16 @@ incidenceDiseasesGraph <- function(age_val,sex_val,purpose_val) {
     theme(legend.position = "none") +
     theme(plot.title=element_text(size=12, hjust = 0.5),
           plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
 }
 
 # ---- Disease change mortality over time graph -----
@@ -459,16 +460,16 @@ mortalityDiseasesGraph <- function(age_val,sex_val,purpose_val) {
     theme(legend.position = "none") +
     theme(plot.title=element_text(size=12, hjust = 0.5),
           plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+          axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=8),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=8))
 }
 
 
