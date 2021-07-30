@@ -2,10 +2,8 @@
 rm (list = ls())
 library(dplyr)
 library(tidyr)
-library(ggpubr)
-library(gridExtra)
 library(ggplot2)
-library(cowplot)
+
 
 
 source("./Scripts/functions_presentation.R")
@@ -103,13 +101,15 @@ dir.create(tablesLocation, recursive=TRUE, showWarnings=FALSE)
 
 # Transport graph ----------------------------------------------
 ### Problem with data, missing prop
-# modes_list[[index]] <- GraphsMode(
-#   age_val= AGE,
-#   sex_val= SEX,
-#   purpose_val= PURP
-# )
-# ggsave(paste0(graphsLocation, "/", "mode_", PURP,".tiff"),width=12,height=18)
+modes_list[[index]] <- GraphsMode(
+  age_val= AGE,
+  sex_val= SEX,
+  purpose_val= PURP
+)
+ggsave(paste0(graphsLocation, "/", "mode_", PURP,".tiff"),width=12,height=18)
 # 
+
+
 
 # PA minutes --------------------------------------------------
 minutesT <- minutesTable(
