@@ -5,130 +5,44 @@ suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(srvyr))
 suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(drpa))
+require(ithimr)
 
 
-## loading copies of the ithm-r functions called
 
-# gen_pa_rr <- function(mmets_pp) {
-#   # mmets_pp_location=mmets_pp_MEL
-#   # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
-#   # # location of ithmr default dose response data:
-#   # dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
-#   #                             "/dose_response/drpa/extdata")
-#   # PA_DOSE_RESPONSE_QUANTILE=F
-#   
-#   # if local environment parameters have been supplied, use them
-#   # if(!is.null(parameters)) {
-#   #   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
-#   # }
-#   # 
-#   ## loading copies of the ithm-r functions called
-gen_pa_rr <- function(mmets_pp) {
-  
-  
-  # filtering down to columns with 'mmet' in their name
-  SCEN_SHORT_NAME <- colnames(mmets_pp)[grep("mmet",colnames(mmets_pp))]
-  # removing '_mmet' to find the base scenario and scenario names
-  SCEN_SHORT_NAME <- gsub("_mmet","",SCEN_SHORT_NAME)
-  
-  dose_columns <- match(paste0(SCEN_SHORT_NAME, "_mmet"), 
-                        colnames(mmets_pp))
-  doses_vector <- unlist(data.frame(mmets_pp[, dose_columns]))
-  for (j in c(1:nrow(DISEASE_INVENTORY))[DISEASE_INVENTORY$physical_activity == 
-                                         1]) {
-    pa_dn <- as.character(DISEASE_INVENTORY$pa_acronym[j])
-    pa_n <- as.character(DISEASE_INVENTORY$acronym[j])
-    return_vector <- PA_dose_response(cause = pa_dn, dose = doses_vector)
-    print(paste("index: ", which(parameters[[paste0("PA_DOSE_RESPONSE_QUANTILE_", pa_dn)]] == get(paste0("PA_DOSE_RESPONSE_QUANTILE_", 
-                                                                                                         pa_dn))), " for ", pa_dn))
-    for (i in 1:length(SCEN_SHORT_NAME)) {
-      scen <- SCEN_SHORT_NAME[i]
-      mmets_pp[[paste("RR_pa", scen, pa_n, sep = "_")]] <- return_vector$rr[(1 + (i - 1) * nrow(mmets_pp)):(i * nrow(mmets_pp))]
+# ----- Generate RRs per person -----
+
+## Using drpa function to generate RRs
+
+gen_pa_rr <- function(dose_response_quantile){
+  # dose_response_quantile=QUANTILE
+  # SCEN_SHORT_NAME <- colnames(mmets_pp)[grep("mmet",colnames(mmets_pp))]
+  #     # removing '_mmet' to find the base scenario and scenario names
+  #     SCEN_SHORT_NAME <- gsub("_mmet","",SCEN_SHORT_NAME)
+  #     CAUSE_OUTCOME <- data.frame(cause=DISEASE_LIST$disease,
+  #                                 outcome=ifelse(DISEASE_LIST$`fatal-and-non-fatal`=="NA", 'fatal','fatal-and-non-fatal'))
+  for (s in SCEN_SHORT_NAME) {
+    for (c in CAUSE_OUTCOME$cause) {
+      
+      # for (o in CAUSE_OUTCOME$outcome) {
+      # s="base"
+      # c="bladder-cancer"
+      # o="fatal-and-non-fatal"
+      
+      ### Scenarios
+      
+      
+      mmets_pp[,paste("RR_pa", s, c, sep = "_")] <- drpa::dose_response(cause = c, outcome_type = ifelse(c=="diabetes", 'fatal',
+                                                                                                         'fatal-and-non-fatal'), 
+                                                                        dose = mmets_pp[,paste0(s, "_mmet")], 
+                                                                        quantile = dose_response_quantile, confidence_intervals = F, 
+                                                                        use_75_pert = T)
+      
     }
   }
   mmets_pp
 }
 
-PA_dose_response <- function(cause, dose, confidence_intervals = F) {
-  
-  list_of_files <- list.files(path=dose_response_folder, recursive=TRUE,
-                              pattern="\\.csv$", full.names=TRUE)
-  for (i in 1:length(list_of_files)){
-    assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
-           readr::read_csv(list_of_files[[i]],col_types = cols()),
-           pos = 1)}
-  
-  if (sum(is.na(dose)) > 0 || class(dose) != "numeric") {
-    stop("Please provide dose in numeric")
-  }
-  if (!cause %in% c("all_cause", "breast_cancer", "cardiovascular_disease", 
-                    "colon_cancer", "coronary_heart_disease", "diabetes", 
-                    "endometrial_cancer", "heart_failure", "lung_cancer", 
-                    "stroke", "total_cancer")) {
-    stop("Unsupported cause/disease. Please select from \n\n         all_cause \n\n         breast_cancer\n\n         cardiovascular_disease \n\n         colon_cancer \n\n         coronary_heart_disease \n\n         endometrial_cancer \n\n         heart_failure \n\n         lung_cancer \n\n         stroke \n\n         total_cancer")
-  }
-  outcome_type <- ifelse(cause %in% c("lung_cancer", "breast_cancer", 
-                                      "endometrial_cancer", "colon_cancer"), "all", "mortality") 
-  if (cause %in% c("total_cancer", "coronary_heart_disease", 
-                   "breast_cancer", "endometrial_cancer", "colon_cancer")) 
-    dose[dose > 35] <- 35
-  else if (cause == "lung_cancer") 
-    dose[dose > 10] <- 10
-  else if (cause == "stroke") 
-    dose[dose > 32] <- 32
-  else if (cause == "all_cause") 
-    dose[dose > 16.08] <- 16.08
-  fname <- paste(cause, outcome_type, sep = "_")
-  lookup_table <- get(fname)
-  lookup_df <- setDT(lookup_table)
-  rr <- approx(x = lookup_df$dose, y = lookup_df$RR, xout = dose, 
-               yleft = 1, yright = min(lookup_df$RR))$y
-  if (confidence_intervals || PA_DOSE_RESPONSE_QUANTILE == 
-      T) {
-    lb <- approx(x = lookup_df$dose, y = lookup_df$lb, xout = dose, 
-                 yleft = 1, yright = min(lookup_df$lb))$y
-    ub <- approx(x = lookup_df$dose, y = lookup_df$ub, xout = dose, 
-                 yleft = 1, yright = min(lookup_df$ub))$y
-  }
-  if (PA_DOSE_RESPONSE_QUANTILE == T) {
-    rr <- qnorm(get(paste0("PA_DOSE_RESPONSE_QUANTILE_", 
-                           cause)), mean = rr, sd = (ub - lb)/1.96)
-    rr[rr < 0] <- 0
-  }
-  if (confidence_intervals) {
-    return(data.frame(rr = rr, lb = lb, ub = ub))
-  }
-  else {
-    return(data.frame(rr = rr))
-  }
-}
-
-# if mmets_pp_location is a file location, read the csv. If not, then
-# use it as a dataframe.
-# mmets_pp <- NULL
-# if(is.character(mmets_pp_location)) {
-#   mmets_pp <- read.csv(mmets_pp_location,as.is=T, fileEncoding="UTF-8-BOM")
-# }
-# if(!is.character(mmets_pp_location)) {
-#   mmets_pp <- mmets_pp_location ### Alan, I changed here, as in mslt mmets have uncertainty, so should not be read from fixed file
-# }
-# 
-#   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
-#   
-# 
-#   
-#   # load every csv file in the dose response folder
-#   list_of_files <- list.files(path=dose_response_folder, recursive=TRUE,
-#                               pattern="\\.csv$", full.names=TRUE)
-#   for (i in 1:length(list_of_files)){
-#     assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
-#            readr::read_csv(list_of_files[[i]],col_types = cols()),
-#            pos = 1)
-#   }
-#   
-#   RR_PA_calculations <- gen_pa_rr(mmets_pp)
-#   return(RR_PA_calculations)
-# }
 
 # ----- Potential Impact Fraction ----
 # Generate PIF per person
@@ -136,12 +50,12 @@ PA_dose_response <- function(cause, dose, confidence_intervals = F) {
 # allows to calculate PIFs for physical activity and air pollution
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  # ind_ap_pa_location=RR_PA_calculations_MEL
+  # ind_ap_pa_location=mmets_pp
   # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   # demographic_location="Data/processed/DEMO.csv"
   # combined_AP_PA=F
   # calculate_AP=F
-  
+
   
   # if ind_ap_pa_location is a file location, read the csv. If not, then use it as a dataframe.
   ind_ap_pa <- NULL
@@ -149,9 +63,10 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
     ind_ap_pa <- read.csv(ind_ap_pa_location,as.is=T, fileEncoding="UTF-8-BOM")
   }
   if(!is.character(ind_ap_pa_location)) {
-    ind_ap_pa <- ind_ap_pa_location ## Alan I removed read as this inputs will have uncertainy
+    ind_ap_pa <- ind_ap_pa_location 
   }
-  DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
+  DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") #%>%
+    # filter(!acronym %in% c("alzheimer's-disease", "parkinson's-disease")) ## Temp until fixing issue with MA names (apostrophes)
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   # filtering down to columns with 'mmet' in their name
@@ -200,7 +115,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         # set up pif tables
         # dies here if you don't have air pollution
         pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index', 'participant_wt', 'age', 'sex')])
-        setnames(pif_table,base_var,'outcome')
+        setnames(pif_table,base_var,'outcome') #problem here
         pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
         pif_ref_2 <- pif_table[,.(outcome)] 
         ## sort pif_ref
@@ -212,7 +127,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           pif_name <- paste0('pif_',ac)
           # Calculate PIFs for selected scenario
           pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index', 'participant_wt', 'age', 'sex')])
-          setnames(pif_table,scen_var,'outcome')
+          setnames(pif_table,scen_var,'outcome', skip_absent = TRUE)
           pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
           pif_temp_2 <- pif_table[,.(outcome)] 
           
@@ -519,13 +434,11 @@ GetParameters <- function(MMET_CYCLING = 4.63,
   # DIABETES_STROKE_RR_F = c(2.28, 1.93, 2.69)
   # DIABETES_IHD_RR_M = c(2.16, 1.82, 2.56)
   # DIABETES_STROKE_RR_M = c(1.83, 1.60, 2.08)
-  # PA_DOSE_RESPONSE_QUANTILE = T
+  # UNCERTAINTY = T
   
   
   parameters <- list()
   
-  # parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
-  # parameters$NSAMPLES <- NSAMPLES
   
   ### Relative risks diabetes for ihd and stroke
   
@@ -534,11 +447,13 @@ GetParameters <- function(MMET_CYCLING = 4.63,
                        "DIABETES_IHD_RR_M",
                        "DIABETES_STROKE_RR_M"
   )
+  
+
   for (i in 1:length(normVariablesRR)) {
     name <- normVariablesRR[i]
     val <- get(normVariablesRR[i])
     if (length(val) == 1) {
-      assign(name, val[1], envir = .GlobalEnv)
+      parameters[[name]] <- val[1]
     } else {
       parameters[[name]] <-
         rlnorm(NSAMPLES, GetLocation(val[1], GetStDevRR(val[1], val[2],val[3])),
@@ -549,14 +464,14 @@ GetParameters <- function(MMET_CYCLING = 4.63,
   ### Marginal METs
   
   normVariablesMMETs <- c("MMET_CYCLING",
-                          "MMET_WALKING"
-                          
-  )
+                          "MMET_WALKING")
+  
+
   for (i in 1:length(normVariablesMMETs)) {
     name <- normVariablesMMETs[i]
     val <- get(normVariablesMMETs[i])
     if (length(val) == 1) {
-      assign(name, val, envir = .GlobalEnv)
+      parameters[[name]] <- val[1]
     } else {
       parameters[[name]] <-
         rlnorm(NSAMPLES, log(val[1]), log(val[2]))
@@ -566,13 +481,16 @@ GetParameters <- function(MMET_CYCLING = 4.63,
   
   ### Relative risks physical activity
   
-  if(PA_DOSE_RESPONSE_QUANTILE == T ) {
-    pa_diseases <- subset(DISEASE_INVENTORY,physical_activity==1)
-    dr_pa_list <- list()
-    for(disease in pa_diseases$pa_acronym)
-      parameters[[paste0('PA_DOSE_RESPONSE_QUANTILE_',disease)]] <- runif(NSAMPLES,0,1)
+  if(UNCERTAINTY == T ) {
+    
+    parameters[["QUANTILE"]] <- runif(NSAMPLES,0,1)
+
   }
   
+  else {
+    parameters[["QUANTILE"]] <- 0.5
+    
+  }
   parameters 
 }
 
@@ -585,7 +503,7 @@ GetParameters <- function(MMET_CYCLING = 4.63,
 
 
 CalculationModel <- function(output_location="modelOutput",
-                             persons_matched
+                             persons_matched  ### ADD options for what rrs to use
 ){
   
   
@@ -621,19 +539,26 @@ CalculationModel <- function(output_location="modelOutput",
       age >= 65             ~ "65 plus"))) %>%
     mutate(sex=as.factor(sex)) 
   
-  # Generate relative risks per person
+  # Generate relative risks per person (need to use abbraviated names for RRs)
   
-  #### Relative risks of physical activity
-  
-  # browser()
-  
-  mmets_pp <- gen_pa_rr(
-    mmets_pp=mmets_pp
-  ) 
+  for (s in SCEN_SHORT_NAME) {
+    for (i in 1:nrow(DISEASE_SHORT_NAMES)) {
+      # s="scen1"
+       # i=10
+       # o="fatal-and-non-fatal"
+
+      
+      
+      mmets_pp[,paste("RR_pa", s, DISEASE_SHORT_NAMES$acronym[i], sep = "_")] <- 
+        drpa::dose_response(cause = DISEASE_SHORT_NAMES$acronym[i],
+        outcome_type =  ifelse(DISEASE_SHORT_NAMES$acronym[i] == "diabetes", "fatal", 'fatal-and-non-fatal'), 
+        dose = mmets_pp[,paste0(s, "_mmet")],quantile = get(paste("QUANTILE"), envir = .GlobalEnv) ,
+         confidence_intervals = F,use_75_pert = T)
+    }
+  }
+  mmets_pp
   
   cat(paste0("have run gen_pa_rr\n"))
-  
-  # browser()
   
   # Calculate PIFs by age and sex groups
   
@@ -644,7 +569,7 @@ CalculationModel <- function(output_location="modelOutput",
     combined_AP_PA=F,
     calculate_AP=F
   ) 
-  cat(paste0("have run health_burden_2\n"))
+
   
   pif_age_sex <- pif[[2]] %>% dplyr::rename(age=age_group_2) %>%
     dplyr::slice(rep(1:dplyr::n(), each = 5))
@@ -660,6 +585,7 @@ CalculationModel <- function(output_location="modelOutput",
   ## Inputs
   pif_expanded <- pif_age_sex
   
+  cat(paste0("have run health_burden_2\n"))
   
   ### Steps 
   # 1) Run general life table baseline
@@ -694,7 +620,7 @@ CalculationModel <- function(output_location="modelOutput",
   general_life_table_bl <- bind_rows(general_life_table_list_bl, .id = "age_group") %>%
     mutate(age_group = as.numeric(gsub("_.*","",age_group)))
   
-  
+  cat(paste0("have run baseline life table"))
   
   # 2) Run disease life tables baseline
   
@@ -717,7 +643,7 @@ CalculationModel <- function(output_location="modelOutput",
   
   disease_cohorts <- DISEASE_SHORT_NAMES %>%
     # Exclude non-diseases, road injuries, and diseases with no pif
-    dplyr::filter(is_not_dis == 0 & acronym != 'no_pif' & acronym != 'other' ) %>%
+    dplyr::filter(is_not_dis == 0 & acronym != 'no_pif' & acronym != 'other') %>%
     dplyr::select(sname,acronym,males,females)
   
   # adding the age and sex cohorts:
@@ -728,8 +654,10 @@ CalculationModel <- function(output_location="modelOutput",
     dplyr::select(age,sex,sname,acronym,cohort) %>%
     # ishd and strk have the prerequisite disease dmt2
     mutate(prerequsite=ifelse(sname %in% c("ishd","strk"),paste0(age,"_",sex,"_dmt2"),0)) %>%
+    # if all-cause cancer true
+    mutate(cancers=ifelse(str_detect(acronym, 'cancer'), "all-cause-cancer", 0)) %>%
     # ensuring prequisites are calculated first
-    arrange(age,sex,prerequsite,sname)
+    arrange(age,sex,prerequsite, cancers, sname)
   
   
   disease_life_table_list_bl <- list()
@@ -740,15 +668,20 @@ CalculationModel <- function(output_location="modelOutput",
       in_mid_age       = age_sex_disease_cohorts$age[i],
       in_sex           = age_sex_disease_cohorts$sex[i],
       in_disease       = age_sex_disease_cohorts$sname[i],
-      incidence_trends = incidence_trends,
-      mortality_trends = mortality_trends
+      incidence_trends = NULL, ### add back once calculated for new diseases
+      mortality_trends = NULL
     )
     names(disease_life_table_list_bl)[i] <- age_sex_disease_cohorts$cohort[i]
+    
   }
+  cat(paste0("have run baseline disease life table"))
   
-  # 3) Run scenario life tables (where incidence is mofified by pif_expanded)
+  # 3) Run scenario life tables (where incidence is modified by pif_expanded)
   
   ### Read disease inventory and only include PA related diseases
+   
+  ## list parameters to global env when checking the code below (commnet out otherwise)
+  # list2env(parameters,globalenv())
   
   disease_relative_risks <- tribble(
     ~sex    , ~prerequsite, ~disease , ~relative_risk       ,
@@ -761,15 +694,26 @@ CalculationModel <- function(output_location="modelOutput",
   disease_life_table_list_sc <- list()
   
   for (i in 1:nrow(age_sex_disease_cohorts)){
-    # i=6
+
+    # i=2L
     td1_age_sex <- MSLT_DF %>%
       filter(age >= age_sex_disease_cohorts$age[i] & sex == age_sex_disease_cohorts$sex[i])
-    
+
+   {if(age_sex_disease_cohorts$cancers[i] != 0 && cancers_all == T){
+      
+      pif_colname <- paste0('pif_all-cause-cancer')
+      
+      pif_disease <- pif_expanded %>%
+        filter(age >= age_sex_disease_cohorts$age[i] & sex == age_sex_disease_cohorts$sex[i]) %>%
+        dplyr::select(age,sex,pif_colname)
+    }else{
     pif_colname <- paste0('pif_',age_sex_disease_cohorts$acronym[i])
     
     pif_disease <- pif_expanded %>%
       filter(age >= age_sex_disease_cohorts$age[i] & sex == age_sex_disease_cohorts$sex[i]) %>%
       dplyr::select(age,sex,pif_colname)
+    }
+      }
     
     # adjustment for diabetes effect on ihd and stroke
     if(age_sex_disease_cohorts$prerequsite[i] != 0){
@@ -793,27 +737,30 @@ CalculationModel <- function(output_location="modelOutput",
       pif_disease[[target_disease]] <- 1- (1-pif_disease[[target_disease]]) * (1-pif_dia)
       # print(sum(old_pif-pif_disease[[target_disease]]))
     }
+
+      
+        incidence_colname <- paste0('incidence_', age_sex_disease_cohorts$sname[i])
+        new_col <- td1_age_sex%>%pull(incidence_colname) * (1 - (pif_disease%>%pull(pif_colname)))
+        new_col[is.na(new_col)] <- 0
+        td1_age_sex[[incidence_colname]] <- new_col
     
-    incidence_colname <- paste0('incidence_', age_sex_disease_cohorts$sname[i])
-    new_col <- td1_age_sex%>%pull(incidence_colname) * (1 - (pif_disease%>%pull(pif_colname)))
-    new_col[is.na(new_col)] <- 0
-    td1_age_sex[[incidence_colname]] <- new_col
+    
     
     ## Instead of idata, feed td to run scenarios. Now all diseases are run again, with the effect of diabetes
     ## on cardiovascular diseases taken into account. 
-    
+  
     disease_life_table_list_sc[[i]] <- RunDisease(
       in_idata         = td1_age_sex,
       in_sex           = age_sex_disease_cohorts$sex[i],
       in_mid_age       = age_sex_disease_cohorts$age[i],
       in_disease       = age_sex_disease_cohorts$sname[i],
-      incidence_trends = incidence_trends,
-      mortality_trends = mortality_trends
+      incidence_trends = NULL, ## add back once trends for all diseases available
+      mortality_trends = NULL ## add back once trends for all diseases available
     )
     names(disease_life_table_list_sc)[i] <- age_sex_disease_cohorts$cohort[i]
+    
   }
-  
-  
+  cat(paste0("have run scenario disease life table"))
   
   for (cohort in age_sex_disease_cohorts$cohort) {
     disease_life_table_list_sc[[cohort]]$diff_inc_disease <-
@@ -866,24 +813,50 @@ CalculationModel <- function(output_location="modelOutput",
       filter(age_sex_cohort==age_sex_cohorts$cohort[i]) %>%
       dplyr::select(age,mortality_sum,pylds_sum)
     
+    
+    
     ### Modify rates in static MSLT  (pylds are always static, mx can include future trends)
-    td2 <- MSLT_DF %>%
+ 
+    ### removing the impact from the accumulated mortality from the diseases
+    td1 <- MSLT_DF %>%
       filter(sex==age_sex_cohorts$sex[i]) %>%
       left_join(mx_pylds_sc_total_disease_df_cohort,by="age") %>%
       mutate(mx=mx+replace_na(mortality_sum,0),
              pyld_rate=pyld_rate+replace_na(pylds_sum,0)) %>%
-      dplyr::select(-mortality_sum,-pylds_sum)
+      dplyr::select(-pylds_sum)
+  
+    ### case when we use all cause instead of disease specific mortality
+    if(all_cause == T) {
+      pif_all_cause <- pif_expanded %>% dplyr::select(age, sex, 'pif_all-cause-mortality')
+      
+
+     td2 <- td1 %>%
+       left_join(pif_all_cause, by=c("age", "sex")) %>%
+       dplyr::mutate(mx=(mx-replace_na(mortality_sum,0))*(1-`pif_all-cause-mortality`)) %>%
+       dplyr::select(-mortality_sum)
+    } else {
+      td2=td1
+      }
+
     
     ### Modify death rates with future trends
+    pif_all_cause <- pif_expanded %>% dplyr::select(age, sex, 'pif_all-cause-mortality')
     td3 <- death_projections %>%
       mutate(cohort=paste(age_cohort, sex, sep = "_")) %>% # variable to match change in mortality rates df
       filter(cohort==age_sex_cohorts$cohort[i]) %>%
       left_join(mx_pylds_sc_total_disease_df_cohort) %>%
+      left_join(pif_all_cause)
+      ## takes into account the option of using all-cause mortlaity instead of mortality sum from individual diseases
+       if (all_cause == T) {
+         td3 <- td3 %>%
+      mutate(rate=rate*(1-`pif_all-cause-mortality`))   
+      
+  } else {
+      td3 <- td3 %>%
       mutate(rate=rate+replace_na(mortality_sum,0))%>%
       dplyr::select(-mortality_sum,-pylds_sum)   
-    
-    
-    
+      }
+
     suppressWarnings(
       general_life_table_list_sc[[i]] <- RunLifeTable(
         in_idata    = td2,
@@ -1032,6 +1005,8 @@ CalculationModel <- function(output_location="modelOutput",
   
   # Life years and health adjusted life years ----
   
+  # seed_current=1 #use when checking code, if not comment out
+  
   output_life_years_change <- dataAll %>%
     group_by(sex, age_group_final) %>%
     dplyr::select(age_group_final, sex, Lx_diff, Lwx_diff, Lx_bl, Lwx_bl) %>%
@@ -1057,24 +1032,31 @@ CalculationModel <- function(output_location="modelOutput",
   # Diseases deaths and incidence
   
   output_diseases_change <- dataAll %>% 
-    dplyr::select(sex, age_group_final,
-                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl|inc_num_bl|inc_num_bl")) %>%
+    dplyr::select(sex, age_group_final, contains(c("inc_num_diff", "mx_num_diff", "inc_num_bl", "mx_num_bl")))
+  
+    for(i in 1:nrow(DISEASE_SHORT_NAMES)) {
+      if(DISEASE_SHORT_NAMES$is_not_dis[i] != 0) {
+      } else {
+      # i=2
+      diff_inc=paste0("inc_percent_diff_", DISEASE_SHORT_NAMES$sname[i])
+      inc_num=paste0("inc_num_diff_", DISEASE_SHORT_NAMES$sname[i])
+      inc_baseline=paste0("inc_num_bl_", DISEASE_SHORT_NAMES$sname[i])
+      
+      diff_mx=paste0("mx_percent_diff_", DISEASE_SHORT_NAMES$sname[i])
+      mx_num=paste0("mx_num_diff_", DISEASE_SHORT_NAMES$sname[i])
+      mx_baseline=paste0("mx_num_bl_", DISEASE_SHORT_NAMES$sname[i])
+      
+      output_diseases_change[, diff_inc] <- 
+      output_diseases_change[,inc_num] / output_diseases_change[,inc_baseline]
+        
+      output_diseases_change[, diff_mx] <- 
+        output_diseases_change[,mx_num] / output_diseases_change[,mx_baseline]
+      }
+    }
+    
+    output_diseases_change <- output_diseases_change %>%  
     group_by(sex, age_group_final) %>%
     summarise_if(is.numeric, funs(sum), na.rm = TRUE) %>% 
-    dplyr::mutate(inc_percent_diff_dmt2=inc_num_diff_dmt2/inc_num_bl_dmt2,
-                  inc_percent_diff_ishd=inc_num_diff_ishd/inc_num_bl_ishd,
-                  inc_percent_diff_strk=inc_num_diff_strk/inc_num_bl_strk,
-                  inc_percent_diff_carc=inc_num_diff_carc/inc_num_bl_carc,
-                  inc_percent_diff_tbalc=inc_num_diff_tbalc/inc_num_bl_tbalc,
-                  inc_percent_diff_brsc=inc_num_diff_brsc/inc_num_bl_brsc,
-                  inc_percent_diff_utrc=inc_num_diff_utrc/inc_num_bl_utrc,
-                  mx_percent_diff_dmt2=mx_num_diff_dmt2/mx_num_bl_dmt2,
-                  mx_percent_diff_ishd=mx_num_diff_ishd/mx_num_bl_ishd,
-                  mx_percent_diff_strk=mx_num_diff_strk/mx_num_bl_strk,
-                  mx_percent_diff_carc=mx_num_diff_carc/mx_num_bl_carc,
-                  mx_percent_diff_tbalc=mx_num_diff_tbalc/mx_num_bl_tbalc,
-                  mx_percent_diff_brsc=mx_num_diff_brsc/mx_num_bl_brsc,
-                  mx_percent_diff_utrc=mx_num_diff_utrc/mx_num_bl_utrc) %>%
     ungroup() %>%
     dplyr::rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
     dplyr::rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
@@ -1112,6 +1094,7 @@ CalculationModel <- function(output_location="modelOutput",
   ### Create directories
   
   # outputDir <- paste0(output_location,"/output_df/")
+  pifsDir <- paste0(output_location,"/pifs/")
   mmetsDir <- paste0(output_location,"/mmets/")
   outputDFaggDir <- paste0(output_location,"/output_df_agg/")
   lifeYearsDir <- paste0(output_location,"/life_years/")
@@ -1119,12 +1102,14 @@ CalculationModel <- function(output_location="modelOutput",
   
   
   # dir.create(outputDir, recursive=TRUE, showWarnings=FALSE)
+  dir.create(pifsDir, recursive=TRUE, showWarnings=FALSE)
   dir.create(mmetsDir, recursive=TRUE, showWarnings=FALSE)
   dir.create(outputDFaggDir, recursive=TRUE, showWarnings=FALSE)
   dir.create(lifeYearsDir, recursive=TRUE, showWarnings=FALSE)
   dir.create(diseaseDir, recursive=TRUE, showWarnings=FALSE)
   
   # write.csv(output_df, file=paste0(outputDir, seed_current, ".csv"), row.names=FALSE)
+  write.csv(pif[[2]], file=paste0(pifsDir, seed_current,".csv"), row.names=FALSE)
   write.csv(mmets_pp, file=paste0(mmetsDir, seed_current,".csv"), row.names=FALSE)
   write.csv(output_df_agg, file=paste0(outputDFaggDir, seed_current,".csv"), row.names=FALSE)
   write.csv(output_life_years_change, file=paste0(lifeYearsDir, seed_current,".csv"), row.names=FALSE)

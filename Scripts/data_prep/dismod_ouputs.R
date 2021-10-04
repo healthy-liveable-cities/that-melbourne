@@ -1,4 +1,4 @@
-# Gather outpust from Dismod and arrange for MSLT data frame
+# Gather outputs from Dismod and arrange for MSLT data frame
 # Cancers are derived in Dismod using AIHW data
 # Non-cancers are derived in Dismod using GBD data
 # Prevalence ratios for cancers are derived from prevelence generated in Dismod with AIHW data and GBD data to adjust disability weights.
@@ -8,16 +8,14 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 suppressPackageStartupMessages(library(stringi))
 
-
-
 ### Get file with diseases names
-diseases="Data/Processed/disease_names.csv"
+diseases="Data/Processed/mslt//disease_names.csv"
 
 ### CANCERS
 #### Prepared with AIHW data
 #### Identify cancers in diseases folder
 cancers <- read.csv(diseases, as.is=T, fileEncoding="UTF-8-BOM") %>%
-            filter(str_detect(disease, "cancer")) %>%
+            filter(str_detect(disease, "cancer") | disease == "multiple myeloma"  | disease == "chronic myeloid leukemia") %>%
             pull(sname)
 
 #### Get file names
@@ -25,10 +23,9 @@ index <- 1
 files_names <- list()
 for (d in cancers) {
   for (sex in c("female", "male")) {
-    if (sex == 'male' && (d %in% c('brsc', 'utrc'))) {
-    }
-    else{
-    
+    if (sex == 'male' && (d %in% c('brsc', 'utrc'))  || sex == 'female' && (d %in% 'prsc')){
+     }
+    else {
     files_names[[index]] <- paste0("Data/dismod/ouputs/", d, "_cancer_", sex, "_aihw", ".csv")
     index <- index + 1
     }
@@ -59,7 +56,14 @@ for (i in 1:length(cancers_list)){
   cancers_list[[index]]$age <- 0:100
   cancers_list[[index]]$sex_age_cat <- paste(cancers_list[[index]]$sex, cancers_list[[index]]$age, sep = "_")
   
-  ## modify column names to include disase and match mslt function format
+  ## replace prevalence and case fatality with zero if incidence is zero
+  
+  cancers_list[[index]] <- cancers_list[[index]] %>%
+                            mutate(`Prevalence (rates)` = ifelse(`Incidence (rates)` == 0, 0, `Prevalence (rates)`),
+                                   `Case fatality (rates)` = ifelse(`Incidence (rates)` == 0, 0, `Case fatality (rates)`))
+  
+
+## modify column names to include disase and match mslt function format
   
   name <- unique(cancers_list[[index]]$disease)
   colnames(cancers_list[[index]]) <-  c(paste0("incidence_", name),
@@ -68,9 +72,8 @@ for (i in 1:length(cancers_list)){
                                          paste0("case_fatality_", name), "sex", "disease", "age", "sex_age_cat")
   cancers_list[[index]] <- cancers_list[[index]][ -c(5,6,7) ]
   
-### Alan, how can we replace case_fatality to be zero when incidence is zero?
-  
-index <-  index + 1}
+index <-  index + 1
+}
 
 cancers_df <- plyr::ldply(cancers_list, rbind) %>%
   group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
@@ -86,6 +89,7 @@ write.csv(cancers_df, "Data/Processed/dismod_output_cancers.csv",
 non_cancers <- read.csv(diseases, as.is=T, fileEncoding="UTF-8-BOM") %>%
   filter(is_not_dis ==0) %>%
   filter(str_detect(disease, "cancer", negate = TRUE)) %>%
+  filter(!disease %in% c("multiple myeloma", "chronic myeloid leukemia")) %>%
   pull(sname)
 
 #### Get file names
@@ -124,6 +128,10 @@ for (i in 1:length(non_cancers_list)){
   non_cancers_list[[index]]$sex_age_cat <- paste(non_cancers_list[[index]]$sex, non_cancers_list[[index]]$age, sep = "_")
   ## modify column names to include disase and match mslt function format
   
+  non_cancers_list[[index]] <- non_cancers_list[[index]] %>%
+    mutate(`Prevalence (rates)` = ifelse(`Incidence (rates)` == 0, 0, `Prevalence (rates)`),
+           `Case fatality (rates)` = ifelse(`Incidence (rates)` == 0, 0, `Case fatality (rates)`))
+  
   name <- unique(non_cancers_list[[index]]$disease)
   colnames(non_cancers_list[[index]]) <-  c(paste0("incidence_", name),
                                         paste0("prevalence_", name),
@@ -133,7 +141,8 @@ for (i in 1:length(non_cancers_list)){
   
   ## prevalence and case fatality cannot have values unless incidnece has values
   ### TO DO
-  index <-  index + 1}
+  index <-  index + 1
+  }
 
 non_cancers_df <- plyr::ldply(non_cancers_list, rbind) %>%
   group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
@@ -145,7 +154,11 @@ write.csv(non_cancers_df, "Data/Processed/dismod_output_non_cancers.csv",
             row.names=F, quote=F)
 
 
-#### DJUSTMENT FACTOR FOR PREVALENCE USED TO CALCULATE DISABILITY WEIGHTS
+
+
+##### TO DO-Belen to run dismod with GBD cancer data and compare, done for initial diseases, also 
+##### to adjust for dw
+#### ADJUSTMENT FACTOR FOR PREVALENCE USED TO CALCULATE DISABILITY WEIGHTS
 
 #### Compare GBD and AIHW data
 

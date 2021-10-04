@@ -51,7 +51,7 @@ GetDeathRatesPeriodic <- function(population_deaths_location, location) {
   deaths_rates_final <- deaths_rates_final %>% rbind(deaths_rates_final_add_row) %>% mutate(location = location) %>%
     mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
     mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
-    rename(mx = rate)
+    dplyr::rename(mx = rate)
   
   return(deaths_rates_final)
   

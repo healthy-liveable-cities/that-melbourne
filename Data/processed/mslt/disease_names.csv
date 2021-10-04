@@ -1,16 +1,24 @@
-"disease","sname","is_not_dis","GBD_name","acronym","males","females"
-"diabetes mellitus type 2","dmt2",0,"Diabetes mellitus type 2","t2d",1,1
-"cyclist road injuries","cyri",1,NA,"cyclist",1,1
-"motorcyclist road injuries","mtri",1,NA,"motorcyclist",1,1
-"motor vehicle road injuries","mvri",1,NA,"motor",1,1
-"road injuries","rdin",1,NA,"road",1,1
-"pedestrian road injuries","pdri",1,NA,"pedestrian",1,1
-"lower respiratory infections","lwri",1,"Lower respiratory infections","lri",1,1
-"all causes","allc",2,"All causes","ac",1,1
-"ischemic heart disease","ishd",0,"Ischemic heart disease","ihd",1,1
-"stroke","strk",0,"Stroke","stroke",1,1
-"chronic obstructive pulmonary disease","copd",0,"Chronic obstructive pulmonary disease","copd",1,1
-"tracheal, bronchus, and lung cancer","tbalc",0,"Tracheal, bronchus, and lung cancer","lc",1,1
-"breast cancer","brsc",0,"Breast cancer","breast",0,1
-"uterine cancer","utrc",0,"Uterine cancer","endo",0,1
-"colon and rectum cancer","carc",0,"Colon and rectum cancer","colon",1,1
+"GBD_name","acronym","disease","sname","is_not_dis","males","females"
+"All causes","all-cause-mortality","all causes","allc",2,1,1
+"Ischemic heart disease","coronary-heart-disease","ischemic heart disease","ishd",0,1,1
+"Neoplasms","all-cause-cancer","neoplasms","npls",2,1,1
+"Tracheal, bronchus, and lung cancer","lung-cancer","tracheal, bronchus, and lung cancer","tbalc",0,1,1
+"Stroke","stroke","stroke","strk",0,1,1
+"Diabetes mellitus type 2","diabetes","diabetes mellitus type 2","dmt2",0,1,1
+"Lower respiratory infections","","lower respiratory infections","lwri",1,1,1
+"Breast cancer","breast-cancer","breast cancer","brsc",0,0,1
+"Colon and rectum cancer","colon-cancer","colon and rectum cancer","carc",0,1,1
+"Uterine cancer","endometrial-cancer","uterine cancer","utrc",0,0,1
+"Depressive disorders","depression","depressive disorders","dprd",0,1,1
+"Kidney cancer","kidney-cancer","kidney cancer","kdnc",0,1,1
+"Bladder cancer","bladder-cancer","bladder cancer","bldc",0,1,1
+"Multiple myeloma","myeloma","multiple myeloma","mltm",0,1,1
+"Chronic myeloid leukemia","myeloid-leukemia","chronic myeloid leukemia","chml",0,1,1
+"Esophageal cancer","esophageal-cancer","esophageal cancer","espc",0,1,1
+"Stomach cancer","gastric-cardia-cancer","stomach cancer","stmc",0,1,1
+"Liver cancer","liver-cancer","liver cancer","lvrc",0,1,1
+"Prostate cancer","prostate-cancer","prostate cancer","prsc",0,1,0
+"Alzheimers disease and other dementias","alzheimer's-disease","alzheimers disease and other dementias","adaod",0,1,1
+"Parkinsons disease","parkinson's-disease","parkinsons disease","prkd",0,1,1
+"head and neck cancer","head-and-neck-cancer","head and neck cancer","hanc",0,1,1
+"rectum cancer","rectum-cancer","rectum cancer","rctc",0,1,1

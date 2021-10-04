@@ -4,7 +4,7 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 
 calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
-  # gbd_location="Data/original/gbd/gbd_mslt.csv"
+  # gbd_location="Data/original/ihme/aus_gbd_ihme.csv"
   # disease_outcomes_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   
   gbd <- read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
@@ -12,33 +12,40 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
   disease_names_execute <- read.csv(disease_outcomes_location,
                                     as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::select(GBD_name, acronym) %>%
-    mutate(disease = tolower(GBD_name))
+    mutate(disease = tolower(GBD_name)) 
   
-  DISEASE_SHORT_NAMES <- data.frame(disease = tolower(as.character(unique(gbd$cause_name))), 
-                                    sname = tolower(abbreviate(unique(gbd$cause_name, max = 2))),
-                                    stringsAsFactors = F) %>%
+  ## add head and neck cancer and delete individual diseases
+  
+  disease_names_execute[nrow(disease_names_execute) + 1,] = c("head and neck cancer","head-and-neck-cancer", "head and neck cancer")
+  disease_names_execute[nrow(disease_names_execute) + 1,] = c("rectum cancer","rectum-cancer", "rectum cancer")
+  disease_names_execute <- disease_names_execute %>% dplyr::filter(!GBD_name %in% c("Larynx cancer", "Lip and oral cavity cancer",
+                                                                                    "Nasopharynx cancer", "Other pharynx cancer"))
+  
+  
+  DISEASE_SHORT_NAMES <- disease_names_execute %>%
+                         mutate(sname = abbreviate(disease)) %>%
     mutate(is_not_dis = ifelse(( grepl("injuries", disease) | # grepl determines if the disease string contains 'injuries'
                                    grepl("all causes", disease) |
                                    grepl("lower respiratory infections", disease)), 
-                               1, 0) ) %>%
+                               1, 0)) %>%
     mutate(is_not_dis = case_when(sname == "allc"  ~  2,
                                   sname == "lwri"  ~  1,
-                                  ## Code for major depressive disorder (no deaths) and hypertensive heart disease (no incidence)
-                                  sname == "hyhd"  ~  3,
-                                  sname == "mjdd"  ~  3,
+                                  sname == "npls" ~ 2,
+                                  # ## Code for major depressive disorder (no deaths) and hypertensive heart disease (no incidence)
+                                  # sname == "hyhd"  ~  3,
+                                  # sname == "dprd"  ~  3,
                                   TRUE  ~  is_not_dis)) %>%
-    left_join(disease_names_execute, by="disease") %>%
     mutate(
       males = ifelse(disease %in% c("uterine cancer", "breast cancer"), 0, 1),
       females = ifelse(disease %in% "prostate cancer", 0, 1),
       sname = gsub("'", '', sname),
-      acronym = ifelse(is.na(acronym), sapply(strsplit(disease, " "), head, 1), acronym)) 
+      acronym = ifelse(is.na(acronym), sapply(strsplit(disease, " "), head, 1), acronym))
  return(DISEASE_SHORT_NAMES)
 
 }
 
 calculateGBDwider <- function(gbd_location) {
-  # gbd_location="Data/original/gbd/gbd_mslt.csv"
+  # gbd_location="Data/original/ihme/aus_gbd_ihme.csv"
   
   gbd <-  read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -67,17 +74,42 @@ calculateGBDwider <- function(gbd_location) {
   
   ## Dataframe with rates per one
   gbd_rate <- gbd_tmp %>%
-    # left_join(gbd_pop, by=c("age","sex")) %>%
-    dplyr::select(measure,sex,age,cause,rate,location,number) %>%
+    left_join(gbd_pop, by=c("age","sex")) %>%
+    dplyr::select(measure,sex,age,cause,rate,location,number,pop) %>%
     ## Add age interval variable for over 15, we model adults only
     filter(age != "Under 5" & age != "5 to 9" & age != "10 to 14") %>%
     rowwise() %>%
-    mutate(from_age = as.numeric(str_split(age,' to ')[[1]][1])) %>%
-    mutate(to_age = as.numeric(str_split(age,' to ')[[1]][2])) %>%
-    mutate(age_cat = from_age + 2) %>%
+    separate(age, c("from_age", "to_age"), " to ", remove = FALSE) %>%
+    mutate(age_cat = as.numeric(from_age) + 2) %>%
+    # using rowwise() turns the dataframe into a tibble
+    data.frame()
+  
+  ### Add up individual diseases for head-neck-cancer
+  
+  gbd_rate_2 <- gbd_tmp %>% dplyr::filter(cause %in% c("larynx cancer", "lip and oral cavity cancer",
+                                                         "nasopharynx cancer", "other pharynx cancer")) %>%
+    group_by(measure, sex, age) %>%
+    summarise(number = sum(number)) %>%
+    mutate(cause="head and neck cancer") %>%
+    ungroup() %>%
+    mutate(location="Australia") %>%
+    left_join(gbd_pop, by=c("age","sex")) %>%
+    mutate(rate=number/pop) %>%
+    ## Add age interval variable for over 15, we model adults only
+    filter(age != "Under 5" & age != "5 to 9" & age != "10 to 14") %>%
+    rowwise() %>%
+    separate(age, c("from_age", "to_age"), " to ", remove = FALSE) %>%
+    mutate(age_cat = as.numeric(from_age) + 2) %>%
     # using rowwise() turns the dataframe into a tibble
     data.frame()
 
+  ### Join two rates datasets
+  
+  gbd_rate <- bind_rows(gbd_rate, gbd_rate_2) %>% dplyr::filter(!cause %in% c("larynx cancer", "lip and oral cavity cancer",
+                                                                                 "nasopharynx cancer", "other pharynx cancer"))
+  ### Remove apostrophes from disease names
+  gbd_rate <-  as.data.frame(sapply(gbd_rate, function(x) gsub("'", "", x)))
+  
   gbd_wider <- gbd_rate %>% 
     mutate(disease = tolower(abbreviate(cause))) %>%
     mutate(measure = tolower(measure)) %>%
@@ -94,8 +126,8 @@ calculateGBDwider <- function(gbd_location) {
 ### BZ: removed population and death rates, these are now specified in the mslt_code depending on location (Greater capital cities options and australia wide)
 calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_output_non_cancers) {
    # gbd_wider_location = "Data/processed/mslt/gbd_wider.csv"
-   # dismod_output_cancers = "Data/processed/mslt/dismod_output_cancers.csv"
-   # dismod_output_non_cancers = "Data/processed/mslt/dismod_output_non_cancers.csv"
+   # dismod_output_cancers = "Data/processed/dismod_output_cancers.csv"
+   # dismod_output_non_cancers = "Data/processed/dismod_output_non_cancers.csv"
 
   mslt_df <- data.frame(age = rep(c(0:100), 2), sex = append(rep("male", 101), 
                                                              rep("female", 101))) %>%
@@ -176,25 +208,27 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
   }
   
   # all values get their own column, expanding out to every age number
-  mslt_df_longer <- mslt_df %>%
-    left_join(gbd_df%>%dplyr::select(-age,-age_sex)) %>%
-    pivot_longer(names_to=c("measure","rate_num","disease"),
-                 names_sep="_",
-                 cols=incidence_rate_cyri:ylds_number_copd)
   
+    mslt_df_longer <- mslt_df %>%
+      left_join(gbd_df%>%dplyr::select(-age,-age_sex)) %>%
+      pivot_longer(names_to=c("measure","rate_num","disease"),
+                   names_sep="_",
+                   cols=deaths_rate_allc:ylds_number_hanc)
+    
+    
   # rows only represent age, sex and disease, everything else in columns.
   # Data has to be interpolated from 5-year age groups to 1-year age groups.
   mslt_df_by_disease <- mslt_df_longer %>%
     pivot_wider(names_from=c("measure","rate_num"),
                 values_from=value) %>%
-    dplyr::mutate(dw_adj=(ylds_number/prevalence_number)/(1-ylds_rate_allc_adj_1) ) %>%
+    dplyr::mutate(dw_adj=(ylds_number/prevalence_number)/(1-ylds_rate_allc_adj_1)) %>%
     dplyr::mutate(dw_adj=ifelse(is.nan(dw_adj),0,dw_adj)) %>%
     arrange(disease,sex,age) %>%
     group_by(disease,sex) %>%
     # interpolate dw_adj
     dplyr::mutate(dw_adj=exp(interpolateFunction(dw_adj))) %>%
     ## Interpolate mortality and ylds (all cause mortality is from Melbourne data)
-    dplyr::mutate(deaths_rate=exp(interpolateFunction(deaths_rate))) %>%
+    dplyr::mutate(deaths_rate=ifelse(disease=="dprd", 0, exp(interpolateFunction(deaths_rate)))) %>% ### depression does not have mortality data
     dplyr::mutate(ylds_rate=exp(interpolateFunction(ylds_rate))) %>%
     ## not sure if we were supposed to interpolate this one
     dplyr::mutate(ylds_rate_allc_adj_1=exp(interpolateFunction(ylds_rate_allc_adj_1))) %>%
@@ -206,10 +240,9 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
     pivot_wider(id_cols = c(age,sex,sex_age_cat, age_cat,age_cat_2,ylds_rate_allc_adj_1),
                 names_from=disease,
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
-    # AB: I might have this wrong
-    # BZ: this is correct
-    dplyr::rename(pyld_rate=ylds_rate_allc_adj_1)
-  
+    dplyr::rename(pyld_rate=ylds_rate_allc_adj_1) %>% ### ylds and dw for rectum cancer are the same as for colon and rectum (in the absence of info)
+    dplyr::mutate(dw_adj_rctc=dw_adj_carc,
+                  ylds_rate_rctc=ylds_rate_carc)
 
   
   ### Add dismod outputs rates per one

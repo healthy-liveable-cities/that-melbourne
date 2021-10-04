@@ -1052,6 +1052,11 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
   
+  ### Depression
+  # Use GBD data to derive future trends, not data from AIHW or other aus sources
+  
+  
+  
   ##### MORTALITY
   #### CARDIOVASCULAR
   #### Mortality trends applied to case fatality and hospitalisation to incidence
@@ -1135,6 +1140,69 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
     mutate(dmt2 = 1)
   incidence_trends_f <- incidence_trends_f %>% arrange(year)
   incidence_trends_m <- incidence_trends_m %>% arrange(year)
+  
+  ### Alzheimer diseases (data for all dementia)
+  
+  ### Females (increasing trend)
+  
+  data <-  readxl::read_excel(trends_alzheimer_mortality,  sheet = "S3.3", range = "A3:G13") %>%
+    mutate(year=seq(2010:2019))
+  
+  ### Females                                                                     
+  Females<-lm(data$Women...6~data$year, data=data)
+  summary(Females)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictFem=Females$coefficients[1]+Females$coefficients[2]*new_YEAR
+  predictFem
+  
+  FitFore.Fem<-data.frame(new_YEAR,predictFem) 
+  
+  value_change=log(FitFore.Fem[[21,2]]/FitFore.Fem[[18,2]])
+  
+  value_year=FitFore.Fem[[21,1]]-FitFore.Fem[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+    mutate(adaod  = ifelse(year <= value_year, 
+                           exp(value_change/value_year* year),
+                           exp(value_change/value_year * value_year)))
+  
+  mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
+  
+  ### Males (increasing trend)
+  
+  data <-  readxl::read_excel(trends_alzheimer_mortality,  sheet = "S3.3", range = "A3:G13") %>%
+    mutate(year=seq(2010:2019))
+  
+  ### Males                                                                   
+  Males<-lm(data$Men...5~data$year, data=data)
+  summary(Males)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictMale=Males$coefficients[1]+Males$coefficients[2]*new_YEAR
+  predictMale
+  
+  FitFore.Male<-data.frame(new_YEAR,predictMale) 
+  
+  value_change=log(FitFore.Male[[21,2]]/FitFore.Male[[18,2]])
+  
+  value_year=FitFore.Male[[21,1]]-FitFore.Male[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
+    mutate(adaod  = ifelse(year <= value_year, 
+                           exp(value_change/value_year* year),
+                           exp(value_change/value_year * value_year)))
+  
+  mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
+  
+  
+
   
   return(list(mortality_trends_f, mortality_trends_m, incidence_trends_f, incidence_trends_m))
   
