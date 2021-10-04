@@ -15,9 +15,6 @@ library(ithimr)
 
 library(devtools)
 
-# devtools::install_github("ITHIM/ITHIM-R")
-
-
 # ---- Create directories -----
 
 # Working directory
@@ -97,6 +94,7 @@ death_rate_periodic="Data/processed/mslt/deaths_periodic.csv"
 death_rates_projections="Data/processed/mslt/deaths_projections.csv"
 population_data="Data/original/abs/population_census.xlsx"
 disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+DISEASE_LIST <- readxl::read_xlsx("./Data/diseases_list.xlsx")
 
 ## Victoria specific
 
@@ -125,21 +123,27 @@ i_age_cohort <<- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 9
 i_sex <<- c("male", "female")
 
 
+# 
+# # Find global folder in ithimr package
+# global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/') ## no longer needed
+# global_path <- paste0(global_path, "/") ## No longer needed
+# 
+# # Read disease lookup
+# # DISEASE_INVENTORY <- read.csv(paste0(global_path,"dose_response/disease_outcomes_lookup.csv")) ## No longer needed
+# 
+# DISEASE_LIST <- readxl::read_xlsx("./Data/diseases_list.xlsx")
+# 
+# 
+# CAUSE_OUTCOME <- data.frame(cause=DISEASE_LIST$disease,
+#                             outcome=ifelse(DISEASE_LIST$`fatal-and-non-fatal`=="NA", 'fatal','fatal-and-non-fatal'))
 
-# Find global folder in ithimr package
-global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
-global_path <- paste0(global_path, "/")
-
-# Read disease lookup
-DISEASE_INVENTORY <- read.csv(paste0(global_path,"dose_response/disease_outcomes_lookup.csv"))
-
-# Read all DR PA curves
-list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata/"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
-for (i in 1:length(list_of_files)){
-  assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
-         readr::read_csv(list_of_files[[i]],col_types = cols()),
-         pos = 1)
-}
+# # Read all DR PA curves ## No longer needed
+# list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata/"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
+# for (i in 1:length(list_of_files)){
+#   assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
+#          readr::read_csv(list_of_files[[i]],col_types = cols()),
+#          pos = 1)
+# }
 
 ## DATA FILES FOR MODEL  
 
@@ -150,27 +154,37 @@ include <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   dplyr::filter(physical_activity == 1)
 
 DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
-  dplyr::filter(acronym %in% include$acronym)
+  dplyr::filter(acronym %in% include$acronym | acronym == "rectum-cancer")
 
-
+SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <-  12
-PA_DOSE_RESPONSE_QUANTILE <-  T
+NSAMPLES <-  1
+UNCERTAINTY <-  F
+
+### MSLT & PIFs options
+
+#### 1) Include pifs for all-cause mortality impacting on all casue mortality instead of individual diseases
+# accumulated change in mortatlies
+all_cause <- FALSE ## Choose true for all-cause-mortality pifs modifying all cause mortality instead of the 
+                  ## summation of changes from individual diseases
+#### 2) Use all_cancer pif for individual cancers instead of individual diseases pifs, use disease specific mortality changes
+# changes in individual diseases mortality
+
+cancers_all <- FALSE
+
+### 3) Use all_cancer pif for individual cancers insted of individual pifs, and all-cause mortality pif instead of disease specific changes mortality
+### combine 1 and 2
 
 
 parameters  <-   GetParameters(
   MMET_CYCLING=5.8,
   MMET_WALKING=2.5,
-  DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), ### issue when using parameters for uncertainty
-  DIABETES_STROKE_RR_F=c(2.28, 1.93, 2.69),
-  DIABETES_IHD_RR_M=c(2.16, 1.82, 2.56),
-  DIABETES_STROKE_RR_M=c(1.83, 1.60, 2.08))
-
-# parameters$PA_DOSE_RESPONSE_QUANTILE_endometrial_cancer <- runif(NSAMPLES, 0.3, 0.7)
-# parameters$PA_DOSE_RESPONSE_QUANTILE_breast_cancer <- runif(NSAMPLES, 0.3, 0.7)
-# parameters$PA_DOSE_RESPONSE_QUANTILE_colon_cancer <- runif(NSAMPLES, 0.3, 0.7)
+  DIABETES_IHD_RR_F= 2.82, #c(2.82, 2.35, 3.38), 
+  DIABETES_STROKE_RR_F= 2.28, #c(2.28, 1.93, 2.69),
+  DIABETES_IHD_RR_M= 2.16, #c(2.16, 1.82, 2.56),
+  DIABETES_STROKE_RR_M= 1.83)#c(1.83, 1.60, 2.08))
 
 
 # ---- Run model ----
@@ -186,8 +200,9 @@ parameters  <-   GetParameters(
 # registerDoParallel(cl)
 # start_time = Sys.time()
 # 
+
 ## non-parallel implementation of outputs
-results <- for(seed_current in 1:12){
+results <- for(seed_current in 1:NSAMPLES){
   for(i in 1:nrow(scenarios_ShortTrips)){
 
     for(p in 1:length(parameters))
@@ -244,16 +259,31 @@ index <- index + 1
 
 
 output_df_agg <- do.call(rbind.data.frame, list_output_agg)
-  
-# Save results
-saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change.rds"))
-saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change.rds"))
-saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg.rds"))
 
 
+#### Different saving names   
+# # Save results option with all-cause mortality pifs
+# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_with_all_cause.rds"))
+# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change_with_all_cause.rds"))
+# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg_with_all_cause.rds"))
+
+# # Save results option without all-cause mortality pifs, uses disease specific pifs
+# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_with_disease_specific.rds"))
+# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_with_disease_specific.rds"))
+# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg_with_disease_specific.rds"))
 
 
-# Results below are deterministic, run once only
+# Save results option without option use all-cause cancers
+# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_all_cause_cancer.rds"))
+# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_all_cause_cancer.rds"))
+# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg__all_cause_cancer.rds"))
+
+# Save results option without option use all-cause cancers
+saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_all_cause_cancer_and_mortality.rds"))
+saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_all_cause_cancer_and_mortality.rds"))
+saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg__all_cause_cancer_and_mortality.rds"))
+
+
 # ---- Transport -----
 
 print(paste0("summarising transport modes ",nrow(scenarios_ShortTrips)," scenario outputs at ",Sys.time()))
