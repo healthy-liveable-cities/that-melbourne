@@ -154,7 +154,22 @@ include <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   dplyr::filter(physical_activity == 1)
 
 DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
-  dplyr::filter(acronym %in% include$acronym | acronym == "rectum-cancer")
+  dplyr::filter(acronym %in% include$acronym | acronym == "rectum-cancer") %>% ## see comment below for this filter
+  dplyr::filter(disease %in% c("all causes", "ischemic heart disease", "tracheal, bronchus, and lung cancer",
+                               "stroke", "diabetes mellitus type 2", "breast cancer", "colon and rectum cancer",                
+                                "uterine cancer"))
+
+### This additional filter is to check the impact of adding diseases on results (it is used when 
+### running disease life tables in run_model)
+### total diseases included in MA
+# "all causes", "ischemic heart disease", "neoplasms". "tracheal, bronchus, and lung cancer",    
+# "stroke", "diabetes mellitus type 2", "breast cancer", "colon and rectum cance",                
+# "uterine cancer", "depressive disorders", "kidney cancer", "bladder cancer", "multiple myeloma", 
+# "chronic myeloid leukemia", "esophageal cancer", "stomach cancer"                        
+# "liver cancer", "prostate cancer", "alzheimers disease and other dementias", "parkinsons disease"                    
+# "head and neck cancer", "rectum cancer"                         
+ 
+
 
 SCEN_SHORT_NAME <- c("base", "scen1")
 
@@ -201,6 +216,10 @@ parameters  <-   GetParameters(
 # start_time = Sys.time()
 # 
 
+
+i=17
+seed_current=1
+# seed_current=1
 ## non-parallel implementation of outputs
 results <- for(seed_current in 1:NSAMPLES){
   for(i in 1:nrow(scenarios_ShortTrips)){
