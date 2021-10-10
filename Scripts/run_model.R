@@ -49,9 +49,8 @@ gen_pa_rr <- function(dose_response_quantile){
 # Uses modify version from ithimr to account for participant weights 
 # allows to calculate PIFs for physical activity and air pollution
 
-health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
+health_burden_2 <- function(ind_ap_pa_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
   # ind_ap_pa_location=mmets_pp
-  # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   # demographic_location="Data/processed/DEMO.csv"
   # combined_AP_PA=F
   # calculate_AP=F
@@ -65,8 +64,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   if(!is.character(ind_ap_pa_location)) {
     ind_ap_pa <- ind_ap_pa_location 
   }
-  DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") #%>%
-    # filter(!acronym %in% c("alzheimer's-disease", "parkinson's-disease")) ## Temp until fixing issue with MA names (apostrophes)
+  DISEASE_INVENTORY <- DISEASE_INVENTORY
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   # filtering down to columns with 'mmet' in their name
@@ -411,7 +409,6 @@ GetShape <- function(mean, sd) {
                    exp(2 * log(mean))) - 
                2 * log(mean))
   return(Shape)
-  
 }
 
 GetLocation <- function(mean, shape) {
@@ -420,9 +417,7 @@ GetLocation <- function(mean, shape) {
 }
 
 
-GetParameters <- function(MMET_CYCLING = 4.63,
-                          MMET_WALKING = 2.53,
-                          DIABETES_IHD_RR_F = 2.82, 
+GetParameters <- function(DIABETES_IHD_RR_F = 2.82, 
                           DIABETES_STROKE_RR_F = 2.28,
                           DIABETES_IHD_RR_M = 2.16, 
                           DIABETES_STROKE_RR_M = 1.83){
@@ -463,20 +458,20 @@ GetParameters <- function(MMET_CYCLING = 4.63,
   
   ### Marginal METs
   
-  normVariablesMMETs <- c("MMET_CYCLING",
-                          "MMET_WALKING")
-  
-
-  for (i in 1:length(normVariablesMMETs)) {
-    name <- normVariablesMMETs[i]
-    val <- get(normVariablesMMETs[i])
-    if (length(val) == 1) {
-      parameters[[name]] <- val[1]
-    } else {
-      parameters[[name]] <-
-        rlnorm(NSAMPLES, log(val[1]), log(val[2]))
-    }
-  }
+  # normVariablesMMETs <- c("MMET_CYCLING",
+  #                         "MMET_WALKING")
+  # 
+  # 
+  # for (i in 1:length(normVariablesMMETs)) {
+  #   name <- normVariablesMMETs[i]
+  #   val <- get(normVariablesMMETs[i])
+  #   if (length(val) == 1) {
+  #     parameters[[name]] <- val[1]
+  #   } else {
+  #     parameters[[name]] <-
+  #       rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+  #   }
+  # }
   
   
   ### Relative risks physical activity
@@ -561,10 +556,8 @@ CalculationModel <- function(output_location="modelOutput",
   cat(paste0("have run gen_pa_rr\n"))
   
   # Calculate PIFs by age and sex groups
-  
   pif <- health_burden_2(
     ind_ap_pa_location= mmets_pp,
-    disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in parameters list
     demographic_location="Data/processed/DEMO.csv",
     combined_AP_PA=F,
     calculate_AP=F
@@ -668,8 +661,8 @@ CalculationModel <- function(output_location="modelOutput",
       in_mid_age       = age_sex_disease_cohorts$age[i],
       in_sex           = age_sex_disease_cohorts$sex[i],
       in_disease       = age_sex_disease_cohorts$sname[i],
-      incidence_trends = NULL, ### add back once calculated for new diseases
-      mortality_trends = NULL
+      incidence_trends = incidence_trends,
+      mortality_trends = mortality_trends
     )
     names(disease_life_table_list_bl)[i] <- age_sex_disease_cohorts$cohort[i]
     
@@ -754,8 +747,8 @@ CalculationModel <- function(output_location="modelOutput",
       in_sex           = age_sex_disease_cohorts$sex[i],
       in_mid_age       = age_sex_disease_cohorts$age[i],
       in_disease       = age_sex_disease_cohorts$sname[i],
-      incidence_trends = NULL, ## add back once trends for all diseases available
-      mortality_trends = NULL ## add back once trends for all diseases available
+      incidence_trends = incidence_trends,
+      mortality_trends = mortality_trends
     )
     names(disease_life_table_list_sc)[i] <- age_sex_disease_cohorts$cohort[i]
     
@@ -781,11 +774,13 @@ CalculationModel <- function(output_location="modelOutput",
   # convert the list of dataframes to single dataframes
   disease_life_table_bl <- bind_rows(disease_life_table_list_bl, .id = "age_sex_disease_cohort") %>%
     mutate(age_sex_disease_cohort = as.numeric(gsub("_.*","",age_sex_disease_cohort))) %>%
-    dplyr::rename(age_group=age_sex_disease_cohort)
+    dplyr::rename(age_group=age_sex_disease_cohort) %>% 
+    mutate(mx = ifelse(disease == "dprd", 0, mx)) # depression has no mx, but some left from original data
   
   disease_life_table_sc <- bind_rows(disease_life_table_list_sc, .id = "age_sex_disease_cohort") %>%
     dplyr::mutate(age_sex_disease_cohort = as.numeric(gsub("_.*","",age_sex_disease_cohort))) %>%
-    dplyr::rename(age_group=age_sex_disease_cohort)
+    dplyr::rename(age_group=age_sex_disease_cohort) %>% 
+    mutate(mx = ifelse(disease == "dprd", 0, mx)) # d
   
   
   # 4) Collect changes in mx and pylds from differences between baseline and sceanrio disease life tables
@@ -1006,7 +1001,7 @@ CalculationModel <- function(output_location="modelOutput",
   # Life years and health adjusted life years ----
   
   # seed_current=1 #use when checking code, if not comment out
-  
+  options(scipen = 100)
   output_life_years_change <- dataAll %>%
     group_by(sex, age_group_final) %>%
     dplyr::select(age_group_final, sex, Lx_diff, Lwx_diff, Lx_bl, Lwx_bl) %>%
@@ -1032,7 +1027,13 @@ CalculationModel <- function(output_location="modelOutput",
   # Diseases deaths and incidence
   
   output_diseases_change <- dataAll %>% 
-    dplyr::select(sex, age_group_final, contains(c("inc_num_diff", "mx_num_diff", "inc_num_bl", "mx_num_bl")))
+    dplyr::select(sex, age_group_final, contains(c("inc_num_diff", 
+                                         "mx_num_diff", "inc_num_bl", "mx_num_bl")))  %>% 
+    mutate_all(function(x) ifelse(is.infinite(x), 0, x)) %>% 
+    mutate_all(function(x) ifelse(is.na(x), 0, x))  %>%  
+    group_by(sex, age_group_final) %>%
+    summarise_if(is.numeric, funs(sum), na.rm = TRUE) %>% 
+    ungroup()
   
     for(i in 1:nrow(DISEASE_SHORT_NAMES)) {
       if(DISEASE_SHORT_NAMES$is_not_dis[i] != 0) {
@@ -1047,29 +1048,27 @@ CalculationModel <- function(output_location="modelOutput",
       mx_baseline=paste0("mx_num_bl_", DISEASE_SHORT_NAMES$sname[i])
       
       output_diseases_change[, diff_inc] <- 
-      output_diseases_change[,inc_num] / output_diseases_change[,inc_baseline]
+      output_diseases_change[,inc_num]/output_diseases_change[,inc_baseline]
         
       output_diseases_change[, diff_mx] <- 
-        output_diseases_change[,mx_num] / output_diseases_change[,mx_baseline]
+        output_diseases_change[,mx_num]/output_diseases_change[,mx_baseline]
       }
     }
     
-    output_diseases_change <- output_diseases_change %>%  
-    group_by(sex, age_group_final) %>%
-    summarise_if(is.numeric, funs(sum), na.rm = TRUE) %>% 
-    ungroup() %>%
+    output_diseases_change <- output_diseases_change %>%
     dplyr::rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
     dplyr::rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
     dplyr::rename_with(~ gsub("inc_percent", "inc.percent", .x, fixed = TRUE)) %>% 
     dplyr::rename_with(~ gsub("mx_percent", "mx.percent", .x, fixed = TRUE)) %>%
     dplyr::select(-contains("bl")) %>%
-    pivot_longer(cols=inc.num_diff_brsc:mx.percent_diff_utrc,
+    pivot_longer(cols=-c(sex,age_group_final),
                  names_to = c("measure","scenario","disease"),
                  names_sep="_")  %>%
     left_join(populationLargeCohort, by=c('age_group_final', 'sex')) %>%
     relocate(population, .after = sex) %>%
     mutate(run=seed_current) %>%
-    dplyr::rename(age=age_group_final)
+    dplyr::rename(age=age_group_final) %>% 
+      mutate_all(function(x) ifelse(is.na(x), 0, x)) 
   
   
   # Aggregate resuls over years
@@ -1310,4 +1309,5 @@ PAOutcomes <- function(inputFile) {
   
   # saveRDS(PA_guide_weighted, file=paste0(finalLocation, "/PAallGuide.rds"))
   
-  return(list(PAall=PAall_weighted, PAallGuide=PA_guide_weighted)) }
+  return(list(PAall=PAall_weighted, PAallGuide=PA_guide_weighted))
+  }

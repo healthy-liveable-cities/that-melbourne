@@ -119,7 +119,10 @@ calculateGBDwider <- function(gbd_location) {
                 names_glue = "{measure}_{.value}_{disease}") %>%
     left_join(gbd_pop, by = c("age", "sex")) %>% 
     mutate(sex = tolower(sex)) %>%
-    arrange(sex, age_cat)
+    arrange(sex, age_cat) %>% 
+    mutate_all(function(x) ifelse(is.infinite(x), 0, x)) %>% 
+    mutate_all(function(x) ifelse(is.na(x), 0, x)) 
+  
   return(gbd_wider)
   
 }  
@@ -250,7 +253,9 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
   dismod_non_cancers <- read.csv(dismod_output_non_cancers, as.is=T, fileEncoding="UTF-8-BOM")
   
   mslt_df_wider <- left_join(mslt_df_wider, dismod_cancers) 
-  mslt_df_wider <- left_join(mslt_df_wider, dismod_non_cancers)
+  mslt_df_wider <- left_join(mslt_df_wider, dismod_non_cancers) %>% 
+    mutate_all(function(x) ifelse(is.infinite(x), 0, x)) %>% 
+    mutate_all(function(x) ifelse(is.na(x), 0, x)) 
   
   return(mslt_df_wider)
 }

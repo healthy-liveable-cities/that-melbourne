@@ -47,9 +47,9 @@ finalLocation <- "./output/melbourne-outputs"
 
 output_df_agg_all <- readRDS(paste0(finalLocation,"/output_df_agg.rds")) %>% ## add titles
   left_join(scenariosDF)
-output_diseases_change <- readRDS(paste0(finalLocation,"/output_diseases_change.rds")) %>% ## add titles
+output_diseases_change <- readRDS(paste0(finalLocation,"/output_diseases.rds")) %>% ## add titles
   left_join(scenariosDF)
-output_life_years_change <- readRDS(paste0(finalLocation,"/output_life_years_change.rds")) %>% ## add titles
+output_life_years_change <- readRDS(paste0(finalLocation,"/output_life_years.rds")) %>% ## add titles
   left_join(scenariosDF)
 PAall<-readRDS(paste0(finalLocation,"/PAall.rds")) %>% ## add titles
   left_join(scenariosDF)
@@ -137,7 +137,7 @@ diseasesChangeIncidencePerc(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "disease_change_perc", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "disease_change_perc", PURP, ".png"),width=12,height=18)
 
 ## Overall percentage change in mortaility over life course
 diseasesChangeDeathsPerc(
@@ -145,14 +145,14 @@ diseasesChangeDeathsPerc(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "deaths_change_perc", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "deaths_change_perc", PURP, ".png"),width=12,height=18)
 
 diseasesChangeIncidenceNumbers(
   age_val= AGE,
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "disease_change_num", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "disease_change_num", PURP, ".png"),width=12,height=18)
 
 ## Overall percentage change in mortaility over life course
 diseasesChangeDeathsNumbers(
@@ -160,7 +160,7 @@ diseasesChangeDeathsNumbers(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "deaths_change_num", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "deaths_change_num", PURP, ".png"),width=12,height=18)
 
 ### Incidence diseases change per simulation year
 incidenceDiseasesGraph(
@@ -168,7 +168,7 @@ incidenceDiseasesGraph(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "life_disease_change", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "life_disease_change", PURP, ".png"),width=12,height=18)
 
 ### Mortality diseases change per simulation year
 mortalityDiseasesGraph(
@@ -176,7 +176,7 @@ mortalityDiseasesGraph(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "life_deaths_change", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "life_deaths_change", PURP, ".png"),width=12,height=18)
 # Diseases table -------------------------------------------------------------
 
 diseases <- diseasesTable(
@@ -192,7 +192,7 @@ halyGraph(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "halys", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "halys", PURP, ".png"),width=12,height=18)
 
 ## Healh Adjusted life years change per simulation year
 lyGraph(
@@ -200,7 +200,7 @@ lyGraph(
   sex_val= SEX,
   purpose_val= PURP
 )
-ggsave(paste0(graphsLocation, "/", "lys", PURP, ".png"),width=10,height=6)
+ggsave(paste0(graphsLocation, "/", "lys", PURP, ".png"),width=12,height=18)
 # HALYs table ---------------------------------------------------------------
 
 HALYsLYs <- HALYsTable(

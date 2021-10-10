@@ -12,7 +12,7 @@ library(stringr)
 library(doParallel)
 library(ParallelLogger)
 library(ithimr)
-
+library(caret)
 library(devtools)
 
 # ---- Create directories -----
@@ -143,7 +143,7 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <-  500
+NSAMPLES <- 500
 UNCERTAINTY <-  T
 
 ### MSLT & PIFs options
@@ -162,8 +162,6 @@ cancers_all <- FALSE
 
 
 parameters  <-   GetParameters(
-  MMET_CYCLING=5.8,
-  MMET_WALKING=2.5,
   DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), 
   DIABETES_STROKE_RR_F= c(2.28, 1.93, 2.69),
   DIABETES_IHD_RR_M= c(2.16, 1.82, 2.56),
@@ -171,9 +169,29 @@ parameters  <-   GetParameters(
 
 
 # ---- Run model ----
+# 
+# ### Non-parallel
+# results <- for(seed_current in 1:NSAMPLES){
+#   for(i in 1:nrow(scenarios_ShortTrips)){
+# 
+#     for(p in 1:length(parameters))
+#       assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
+# 
+#     if (file.exists(scenarios_ShortTrips[i,]$scenario_location)){
+#       print(scenarios_ShortTrips[i,]$scenario_location)
+#       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
+#                        persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+#     }
+# 
+#   }
+# }
 
-
-
+# unregister <- function() {
+#   env <- foreach:::.foreachGlobals
+#   rm(list=ls(name=env), pos=env)
+# }
+# 
+# # 
 print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
 number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
@@ -188,9 +206,8 @@ results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
             foreach::foreach(i=1:nrow(scenarios_ShortTrips),
                              .combine=rbind,
                              .verbose=F,
-                             .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
-                            .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr",
-                                   "PA_dose_response", "health_burden_2","RunDisease","RunLifeTable")
+                             .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr")
+
   ) %dopar% {
     for(p in 1:length(parameters))
      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)

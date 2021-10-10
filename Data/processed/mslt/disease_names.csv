@@ -20,5 +20,7 @@
 "Prostate cancer","prostate-cancer","prostate cancer","prsc",0,1,0
 "Alzheimers disease and other dementias","alzheimer's-disease","alzheimers disease and other dementias","adaod",0,1,1
 "Parkinsons disease","parkinson's-disease","parkinsons disease","prkd",0,1,1
+"Rectum cancer","rectum-cancer","rectum cancer","rctc",0,1,1
+"Alzheimers disease and other dementias","all-cause-dementia","alzheimers disease and other dementias","adaod",0,1,1
 "head and neck cancer","head-and-neck-cancer","head and neck cancer","hanc",0,1,1
 "rectum cancer","rectum-cancer","rectum cancer","rctc",0,1,1

@@ -7,8 +7,8 @@ calculateMMETSperPerson <- function(matched_pop_location, MMET_CYCLING,MMET_WALK
   # 
   MMET_MOD <- 3.5 # As in meta analysis diabetes smith et al
   MMET_VIG <- 7
-  # MMET_CYCLING <- 4.63
-  # MMET_WALKING <- 2.53
+  MMET_CYCLING <- 5.8
+  MMET_WALKING <- 2.5
   # matched_pop_location <- persons_matched
   
   # if matched_pop_location is a file location, read the csv. If not, then

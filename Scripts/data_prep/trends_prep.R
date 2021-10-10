@@ -10,7 +10,9 @@ suppressPackageStartupMessages(library(Hmisc))     # this has the 'describe' fun
 
 
 calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_cancers, 
-                                   mortality_trends_cancer_2, trends_cvd, grim_books, trends_diabetes) {
+                                   mortality_trends_cancer_2, trends_cvd, grim_books, trends_diabetes,
+                                   trends_alzheimer_hospitalizations, trends_alzheimer_mortality,
+                                   trends_ihme) {
   
   
   ### Data
@@ -23,6 +25,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   # trends_diabetes="Data/original/aihw/diabetes_trends_aihw.xls"
   # trends_alzheimer_hospitalizations="Data/original/aihw/dementia_hospitalisations.xlsx"
   # trends_alzheimer_mortality="Data/original/aihw/dementia_mortality.xlsx"
+  # trends_ihme="Data/ihme/year_trends.csv"
 
   
   
@@ -146,6 +149,22 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
   
+  ### Liver cancer
+  
+  data <- data_incidence %>% filter(Sex == "Females", `Cancer group/site` == "Liver cancer") %>%
+    dplyr::select(`Age-standardised rate\r\n(per 100,000)`, Year) %>%
+    mutate_all(as.numeric)
+  
+  value_change=log(data[[4,1]]/data[[1,1]])
+  
+  value_year=(data[[4,2]] - data[[1,2]])
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+    mutate(lvrc = ifelse(year <= value_year, 
+                         exp(value_change/value_year* year),
+                         exp(value_change/value_year * value_year)))
+  incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+  
   ### Multiple myeloma
   
   data <- data_incidence %>% filter(Sex == "Females", `Cancer group/site` == "Multiple myeloma") %>%
@@ -233,7 +252,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   ### Rectum cancer
   
-  data <- data_incidence %>% filter(Sex == "Females", `Cancer group/site` == "Rectum cancer") %>%
+  data <- data_incidence %>% filter(Sex == "Females", `Cancer group/site` == "Rectal cancer") %>%
     dplyr::select(`Age-standardised rate\r\n(per 100,000)`, Year) %>%
     mutate_all(as.numeric)
   
@@ -335,6 +354,23 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
   
+  ### Liver cancer
+  
+  data <- data_incidence %>% filter(Sex == "Males", `Cancer group/site` == "Liver cancer") %>%
+    dplyr::select(`Age-standardised rate\r\n(per 100,000)`, Year) %>%
+    mutate_all(as.numeric)
+  
+  value_change=log(data[[4,1]]/data[[1,1]])
+  
+  value_year=(data[[4,2]] - data[[1,2]])
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+    mutate(lvrc = ifelse(year <= value_year, 
+                         exp(value_change/value_year* year),
+                         exp(value_change/value_year * value_year)))
+  
+  incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
+  
   ### Multiple myeloma
   
   data <- data_incidence %>% filter(Sex == "Males", `Cancer group/site` == "Multiple myeloma") %>%
@@ -422,7 +458,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   ### Rectum cancer
   
-  data <- data_incidence %>% filter(Sex == "Males", `Cancer group/site` == "Rectum cancer") %>%
+  data <- data_incidence %>% filter(Sex == "Males", `Cancer group/site` == "Rectal cancer") %>%
     dplyr::select(`Age-standardised rate\r\n(per 100,000)`, Year) %>%
     mutate_all(as.numeric)
   
@@ -530,6 +566,22 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
                          exp(value_change/value_year * value_year)))
   
   mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
+  
+  ### Liver cancer
+  
+  data <- readxl::read_xls(mortality_trends_cancers, sheet = "Liver", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
+  
+  value_change =log(data[[13,8]]/data[[2,8]])
+  
+  value_year=data[[13,1]]-data[[2,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+    mutate(lvrc = ifelse(year <= value_year, 
+                         exp(value_change/value_year* year),
+                         exp(value_change/value_year * value_year)))
+  
+  mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
+  
   
   ### Multiple myeloma
   
@@ -683,11 +735,27 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   value_year=data[[13,1]]-data[[2,1]]
   
   data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
+    mutate(lvrc = ifelse(year <= value_year, 
+                         exp(value_change/value_year* year),
+                         exp(value_change/value_year * value_year)))
+  
+  mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
+  
+  ### Liver cancer
+  
+  data <- readxl::read_xls(mortality_trends_cancers, sheet = "Liver", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
+  
+  value_change=log(data[[13,3]]/data[[2,3]])
+  
+  value_year=data[[13,1]]-data[[2,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
     mutate(bldc = ifelse(year <= value_year, 
                          exp(value_change/value_year* year),
                          exp(value_change/value_year * value_year)))
   
   mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
+  
   
   ### Multiple myeloma
   
@@ -1055,6 +1123,131 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   ### Depression
   # Use GBD data to derive future trends, not data from AIHW or other aus sources
   
+  data <- read.csv(trends_ihme)
+  
+  ### Females
+  ### Parkinson diseases incidence
+  
+  data_2 <- data %>% filter(measure_name %in% "Incidence",  sex_name %in% "Female", 
+                            cause_name %in% "Parkinson's disease") %>%
+                    arrange(year)
+  
+  Females<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Females)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictFemales=Females$coefficients[1]+Females$coefficients[2]*new_YEAR
+  predictFemales
+  
+  FitFore.Female<-data.frame(new_YEAR,predictFemales) 
+  
+  value_change=log(FitFore.Female[[21,2]]/FitFore.Female[[18,2]])
+  
+  value_year=FitFore.Female[[21,1]]-FitFore.Female[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+    mutate(prkd  = ifelse(year <= value_year, 
+                           exp(value_change/value_year* year),
+                           exp(value_change/value_year * value_year)))
+  
+  incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+  
+  ###Males 
+  
+  data <- read.csv(trends_ihme)
+  
+  data_2 <- data %>% filter(measure_name %in% "Incidence",  sex_name %in% "Male", 
+                            cause_name %in% "Parkinson's disease") %>%
+    arrange(year)
+  
+  Males<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Males)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictMales=Females$coefficients[1]+Males$coefficients[2]*new_YEAR
+  predictMales
+  
+  FitFore.Male<-data.frame(new_YEAR,predictMale) 
+  
+  value_change=log(FitFore.Male[[21,2]]/FitFore.Male[[18,2]])
+  
+  value_year=FitFore.Male[[21,1]]-FitFore.Male[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
+    mutate(prkd  = ifelse(year <= value_year, 
+                          exp(value_change/value_year* year),
+                          exp(value_change/value_year * value_year)))
+  
+  incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
+  
+  ### Females
+  ### Depression incidence
+  
+  data <- read.csv(trends_ihme)
+  
+  data_2 <- data %>% filter(measure_name %in% "Incidence",  sex_name %in% "Female", 
+                            cause_name %in% "Depressive disorders") %>%
+    arrange(year)
+  
+  Females<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Females)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictFemales=Females$coefficients[1]+Females$coefficients[2]*new_YEAR
+  predictFemales
+  
+  FitFore.Female<-data.frame(new_YEAR,predictFemales) 
+  
+  value_change=log(FitFore.Female[[21,2]]/FitFore.Female[[18,2]])
+  
+  value_year=FitFore.Female[[21,1]]-FitFore.Female[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+    mutate(dprd  = ifelse(year <= value_year, 
+                          exp(value_change/value_year* year),
+                          exp(value_change/value_year * value_year)))
+  
+  incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+  
+  ###Males 
+  
+  data <- read.csv(trends_ihme)
+  
+  data_2 <- data %>% filter(measure_name %in% "Incidence",  sex_name %in% "Male", 
+                            cause_name %in% "Depressive disorders") %>%
+    arrange(year)
+  
+  Males<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Males)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictMales=Females$coefficients[1]+Males$coefficients[2]*new_YEAR
+  predictMales
+  
+  FitFore.Male<-data.frame(new_YEAR,predictMale) 
+  
+  value_change=log(FitFore.Male[[21,2]]/FitFore.Male[[18,2]])
+  
+  value_year=FitFore.Male[[21,1]]-FitFore.Male[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
+    mutate(dprd  = ifelse(year <= value_year, 
+                          exp(value_change/value_year* year),
+                          exp(value_change/value_year * value_year)))
+  
+  incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
   
   
   ##### MORTALITY
@@ -1132,8 +1325,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
   
-  
-  
+
   mortality_trends_f <- mortality_trends_f %>% arrange(year) %>% ### diabetes 1 as trends only apply to incidence
     mutate(dmt2 = 1)
   mortality_trends_m <- mortality_trends_m %>% arrange(year) %>%
@@ -1201,7 +1393,72 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
   
+  ### Females
+  ### Parkinson diseases mortality
   
+  data <- read.csv(trends_ihme)
+  
+  data_2 <- data %>% filter(measure_name %in% "Deaths",  sex_name %in% "Female", 
+                            cause_name %in% "Parkinson's disease") %>%
+    arrange(year)
+  
+  Females<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Females)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictFemales=Females$coefficients[1]+Females$coefficients[2]*new_YEAR
+  predictFemales
+  
+  FitFore.Female<-data.frame(new_YEAR,predictFemales) 
+  
+  value_change=log(FitFore.Female[[21,2]]/FitFore.Female[[18,2]])
+  
+  value_year=FitFore.Female[[21,1]]-FitFore.Female[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+    mutate(prkd  = ifelse(year <= value_year, 
+                          exp(value_change/value_year* year),
+                          exp(value_change/value_year * value_year)))
+  
+  mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
+  
+  ###Males 
+  
+  data <- read.csv(trends_ihme)
+  
+  data_2 <- data %>% filter(measure_name %in% "Deaths",  sex_name %in% "Male", 
+                            cause_name %in% "Parkinson's disease") %>%
+    arrange(year)
+  
+  Males<-lm(data_2$val~data_2$year, data=data_2)
+  summary(Males)
+  
+  # create the time trend sequence for use in the model to get predicted values in sample and forecast for out of sample
+  
+  new_YEAR=data.frame(seq(2010,2030,1))   # creates a sequence for YEAR but include an additional 10 years
+  new_YEAR
+  predictMales=Females$coefficients[1]+Males$coefficients[2]*new_YEAR
+  predictMales
+  
+  FitFore.Male<-data.frame(new_YEAR,predictMale) 
+  
+  value_change=log(FitFore.Male[[21,2]]/FitFore.Male[[18,2]])
+  
+  value_year=FitFore.Male[[21,1]]-FitFore.Male[[18,1]]
+  
+  data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
+    mutate(prkd  = ifelse(year <= value_year, 
+                          exp(value_change/value_year* year),
+                          exp(value_change/value_year * value_year)))
+  
+  mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
+  
+  ### no mortality for depression, but add trend of 1 (nothing) othrwise error
+  mortality_trends_f$dprd <- 1
+  mortality_trends_m$dprd <- 1
 
   
   return(list(mortality_trends_f, mortality_trends_m, incidence_trends_f, incidence_trends_m))
