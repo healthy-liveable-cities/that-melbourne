@@ -143,7 +143,7 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <- 500
+NSAMPLES <- 5
 UNCERTAINTY <-  T
 
 ### MSLT & PIFs options
@@ -203,7 +203,7 @@ start_time = Sys.time()
 ## Comment out parallel loop
 results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
 
-            foreach::foreach(i=1:nrow(scenarios_ShortTrips),
+            foreach::foreach(i=1:nrow(scenarios_ShortTrips), # Try 10 scenarios at the time
                              .combine=rbind,
                              .verbose=F,
                              .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr")
@@ -263,29 +263,6 @@ index <- index + 1
 
 
 output_df_agg <- do.call(rbind.data.frame, list_output_agg)
-
-
-#### Different saving names   
-# # # Save results option with all-cause mortality pifs
-# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_with_all_cause.rds"))
-# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change_with_all_cause.rds"))
-# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg_with_all_cause.rds"))
-
-# # Save results option without all-cause mortality pifs, uses disease specific pifs
-# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_with_disease_specific.rds"))
-# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_with_disease_specific.rds"))
-# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg_with_disease_specific.rds"))
-
-
-# Save results option without option use all-cause cancers
-# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_all_cause_cancer.rds"))
-# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_all_cause_cancer.rds"))
-# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg__all_cause_cancer.rds"))
-
-# # Save results option without option use all-cause cancers
-# saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change_all_cause_cancer_and_mortality.rds"))
-# saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_all_cause_cancer_and_mortality.rds"))
-# saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg__all_cause_cancer_and_mortality.rds"))
 
 # Save results 
 saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change.rds"))

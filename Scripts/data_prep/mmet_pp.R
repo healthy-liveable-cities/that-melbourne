@@ -2,7 +2,7 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 ### Functions to generate mmets per person with option to include or not include work related PA.
 
-calculateMMETSperPerson <- function(matched_pop_location, MMET_CYCLING,MMET_WALKING,MMET_MOD,MMET_VIG,TOTAL=F) {
+calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKING,MMET_MOD,MMET_VIG,TOTAL=F) {
   # matched_pop_location = "Data/processed/matched_pop.csv"
   # 
   MMET_MOD <- 3.5 # As in meta analysis diabetes smith et al

@@ -10,10 +10,13 @@ library(forcats)
 
 
 # Graphs general inputs
-diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
+diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc", "dprd", "mltm", "chml",
+                   "stmc", "lvrc", "prkd", "adaod", "hanc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
                    "Ischemic heart disease","Stroke","Lung cancer",
-                   "Uterine cancer")
+                   "Uterine cancer", "Depression", "Multiple myeloma", "Chronic myeloid leukemia",
+                   "Stomach cancer", "Liver cancer", "Parkinson's disease", 
+                   "Alzheimers disease and other dementias", "Head and neck cancer" )
 
 scen.lab <- c("1km \u2265 walking","2km \u2265 walking","2km \u2265 cycling", "5km \u2265 cycling","10km \u2265 cycling",
               "1km \u2265 walking ; 1 km < cycling \u2264 2 km","1km \u2265 walking ; 1 km < cycling \u2264 5 km",
@@ -65,17 +68,17 @@ GraphsMode <- function(age_val,sex_val,purpose_val) {
     theme_classic() +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     ggtitle(paste0(ifelse(dataFiltered$purpose=='all', "All", "Commuting"), " trips for ", unique(dataFiltered$age), " and ", unique(dataFiltered$sex))) +
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=12),
-          axis.title=element_text(size=12),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          axis.text=element_text(size=14),
+          axis.title=element_text(size=14),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=12),
+          legend.text = element_text(size=14),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=12))
+          strip.text = element_text(size=14))
 
     }
 
@@ -188,18 +191,18 @@ diseasesChangeIncidencePerc <- function(age_val,sex_val,purpose_val) {
    labs(x="Percentage change incidence", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
   
 }
 
@@ -237,18 +240,18 @@ diseasesChangeIncidenceNumbers <- function(age_val,sex_val,purpose_val) {
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
     ggtitle(paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex))) +
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
 }
 # ---- Disease change deaths graph -----
 diseasesChangeDeathsPerc <- function(age_val,sex_val,purpose_val) {
@@ -283,18 +286,18 @@ diseasesChangeDeathsPerc <- function(age_val,sex_val,purpose_val) {
     labs(x="Percentage change deaths", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
          subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
   
 }
 
@@ -334,18 +337,18 @@ diseasesChangeDeathsNumbers <- function(age_val,sex_val,purpose_val) {
     labs(x="Deaths prevented",  
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
           subtitle = paste("(population=", unique(tmpPlot$population), ")"))+
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
 }
 
 # ---- Disease change incidence over time graph -----
@@ -383,7 +386,7 @@ incidenceDiseasesGraph <- function(age_val,sex_val,purpose_val) {
   
   ggplot(tmpPlot, aes(x=year, colour = disease)) +
     # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal, removed UI to graph all diseases in one graph
-    geom_line(aes(y=median)) +
+    geom_smooth(aes(y=median)) +
     # facet_grid(rows=vars(disease), scales = "free_y") +
     scale_y_continuous(
       name = waiver(),
@@ -398,18 +401,18 @@ incidenceDiseasesGraph <- function(age_val,sex_val,purpose_val) {
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
 }
 
 # ---- Disease change mortality over time graph -----
@@ -443,7 +446,7 @@ mortalityDiseasesGraph <- function(age_val,sex_val,purpose_val) {
   
   ggplot(tmpPlot, aes(x=year, colour = disease)) +
     # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal, removed UI to graph all diseases in one graph
-    geom_line(aes(y=median)) +
+    geom_smooth(aes(y=median)) +
     # facet_grid(rows=vars(disease), scales = "free_y") +
     scale_y_continuous(
       name = waiver(),
@@ -458,18 +461,18 @@ mortalityDiseasesGraph <- function(age_val,sex_val,purpose_val) {
     auo_theme +
     facet_wrap(~ scen_order , nrow = 5, ncol = 2, labeller= labeller(scen_order= scen.lab)) + 
     theme(legend.position = "none") +
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=8),
-          axis.title=element_text(size=8),
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
           legend.title = element_blank(),
-          legend.text = element_text(size=8),
+          legend.text = element_text(size=12),
           legend.key = element_blank(),
           strip.background = element_blank(), 
-          strip.text = element_text(size=8))
+          strip.text = element_text(size=12))
 }
 
 
@@ -515,11 +518,11 @@ halyGraph <- function(age_val,sex_val,purpose_val) {
     theme(legend.position = "none") +
     labs(x="Years since scenario commenced", y="Incidence", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
-         subtitle = paste0("Change in incidence over time"))+
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+         subtitle = paste0("Change in Health-adjusted life years"))+
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
@@ -572,11 +575,11 @@ lyGraph <- function(age_val,sex_val,purpose_val) {
     theme(legend.position = "none") +
     labs(x="Years since scenario commenced", y="Life years", 
          title = paste0(ifelse(tmpPlot$purpose=='all', "All", "Commuting"), " trips for ", unique(tmpPlot$age), " and ", unique(tmpPlot$sex)), 
-         subtitle = paste0("Change in incidence over time"))+
-    theme(plot.title=element_text(size=12, hjust = 0.5),
-          plot.subtitle = element_text(size=12, hjust = 0.5),
-          axis.text=element_text(size=10),
-          axis.title=element_text(size=10),
+         subtitle = paste0("Change in Life years"))+
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
           axis.title.y=element_blank(),
           legend.position = "bottom",
           legend.justification = c(1,1),
