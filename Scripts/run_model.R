@@ -67,6 +67,14 @@ health_burden_2 <- function(ind_ap_pa_location,demographic_location,combined_AP_
   DISEASE_INVENTORY <- DISEASE_INVENTORY
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
   
+  ### DEMOGRAPHICS need to match mmets_pp population
+  
+  DEMOGRAPHIC <- DEMOGRAPHIC %>%
+    separate(age, c("from_age", "to_age"), "-", remove = FALSE) %>%
+    mutate(age_group_2 = as.numeric(from_age) + 2)
+  
+  DEMOGRAPHIC=DEMOGRAPHIC[DEMOGRAPHIC$age_group_2 %in% mmets_pp$age_group_2, ]
+  
   # filtering down to columns with 'mmet' in their name
   SCEN_SHORT_NAME <- colnames(ind_ap_pa)[grep("mmet",colnames(ind_ap_pa))]
   # removing '_mmet' to find the base scenario and scenario names
@@ -546,7 +554,7 @@ CalculationModel <- function(output_location="modelOutput",
       
       mmets_pp[,paste("RR_pa", s, DISEASE_SHORT_NAMES$acronym[i], sep = "_")] <- 
         drpa::dose_response(cause = DISEASE_SHORT_NAMES$acronym[i],
-        outcome_type =  ifelse(DISEASE_SHORT_NAMES$acronym[i] == "diabetes", "fatal", 'fatal-and-non-fatal'), 
+        outcome_type =  'fatal-and-non-fatal', 
         dose = mmets_pp[,paste0(s, "_mmet")],quantile = get(paste("QUANTILE"), envir = .GlobalEnv) ,
          confidence_intervals = F,use_75_pert = T)
     }
