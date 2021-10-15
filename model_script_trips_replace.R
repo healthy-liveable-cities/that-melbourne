@@ -143,7 +143,7 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <- 5
+NSAMPLES <- 10
 UNCERTAINTY <-  T
 
 ### MSLT & PIFs options
@@ -207,11 +207,11 @@ results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
                              .combine=rbind,
                              .verbose=F,
                              .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr")
-
+# seed_current=1
   ) %dopar% {
     for(p in 1:length(parameters))
      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
-
+# i=1
     if (file.exists(scenarios_ShortTrips[i,]$scenario_location))
       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
                      persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))

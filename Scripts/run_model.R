@@ -554,7 +554,7 @@ CalculationModel <- function(output_location="modelOutput",
       
       mmets_pp[,paste("RR_pa", s, DISEASE_SHORT_NAMES$acronym[i], sep = "_")] <- 
         drpa::dose_response(cause = DISEASE_SHORT_NAMES$acronym[i],
-        outcome_type = ifelse(DISEASE_SHORT_NAMES$acronym[i] == "diabetes", "fatal",'fatal-and-non-fatal'), 
+        outcome_type = ifelse(DISEASE_SHORT_NAMES$acronym[i] == "diabetes", "fatal",'fatal-and-non-fatal'), #"fatal-and-non-fatal"
         dose = mmets_pp[,paste0(s, "_mmet")],quantile = get(paste("QUANTILE"), envir = .GlobalEnv) ,
          confidence_intervals = F,use_75_pert = T)
     }
