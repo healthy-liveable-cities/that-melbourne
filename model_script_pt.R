@@ -1,4 +1,4 @@
-## Script to run public transport scenrios from DoT
+## Script to run public transport scenarios from DoT
 
 rm (list = ls())
 
@@ -45,7 +45,7 @@ dir.create(combineLocationOutputAgg, recursive=TRUE, showWarnings=FALSE)
 # ---- Get scenarios names and data -----
 
 ### NOTE trips file to be requested to Masha
-scenarios <- c("dotFull", "dotTrain")
+scenarios <- c("dotFull(DOT)", "dotTrain(DOT)", "dotFull(VISTA)", "dotTrain(VISTA)")
 scenarios_PT <- data.frame(scenario=scenarios) %>%mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
   mutate(trips_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
   mutate(output_location=paste0(outputLocation,"/",scenario))
@@ -104,15 +104,15 @@ DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
   dplyr::filter(!acronym %in% c("bladder-cancer", "alzheimer's-disease", "esophageal-cancer", "kidney-cancer",
                                 "prostate-cancer", "rectum-cancer"))
 
-DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+DISEASE_INVENTORY <<- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
   dplyr::filter(acronym %in% DISEASE_SHORT_NAMES$acronym)
 
-SCEN_SHORT_NAME <- c("base", "scen1")
+SCEN_SHORT_NAME <<- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <- 1
-UNCERTAINTY <-  F
+NSAMPLES <<- 1
+UNCERTAINTY <<-  F
 
 ### MSLT & PIFs options
 
@@ -129,7 +129,7 @@ cancers_all <- FALSE
 ### combine 1 and 2
 
 
-parameters  <-   GetParameters(
+parameters  <<-   GetParameters(
   DIABETES_IHD_RR_F= c(2.82, 2.35, 3.38), 
   DIABETES_STROKE_RR_F= c(2.28, 1.93, 2.69),
   DIABETES_IHD_RR_M= c(2.16, 1.82, 2.56),
