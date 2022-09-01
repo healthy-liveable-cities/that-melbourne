@@ -1,5 +1,5 @@
 rm (list = ls())
-
+# remotes::install_github("meta-analyses/drpa")
 
 # ---- Get libraries ----
 library(plyr)
@@ -11,9 +11,10 @@ library(srvyr)
 library(stringr)
 library(doParallel)
 library(ParallelLogger)
-library(ithimr)
 library(caret)
 library(devtools)
+library(drpa)
+
 
 # ---- Create directories -----
 
@@ -44,7 +45,7 @@ dir.create(combineLocationOutputAgg, recursive=TRUE, showWarnings=FALSE)
 # ---- Get scenarios names and data -----
 
 maxDistanceWalk <- c(0,1,2)
-maxDistanceCycle <- c(0,2,5,10)
+maxDistanceCycle <- c(0,2,5)
 
 tripPurpose <- c("commuting", "all")
 
@@ -130,11 +131,12 @@ DISEASE_SHORT_NAMES <<- read.csv("Data/processed/mslt/disease_names.csv",as.is=T
 include <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>% 
   dplyr::filter(physical_activity == 1)
 
-### Exclude diseases with no effect
+### Exclude diseases with no effect based on https://shiny.mrc-epid.cam.ac.uk/meta-analyses-physical-activity/
+### DRFs for fatal and non-fatal
 DISEASE_SHORT_NAMES <<- DISEASE_SHORT_NAMES %>%
-  dplyr::filter(acronym %in% include$acronym | acronym == "rectum-cancer") %>%
+  dplyr::filter(acronym %in% include$acronym) %>%
   dplyr::filter(!acronym %in% c("bladder-cancer", "alzheimer's-disease", "esophageal-cancer", "kidney-cancer",
-                                "prostate-cancer", "rectum-cancer"))
+                                "prostate-cancer", "rectum-cancer", "parkinson's-disease"))
 
 DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
   dplyr::filter(acronym %in% DISEASE_SHORT_NAMES$acronym)
@@ -143,7 +145,7 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <- 1
+NSAMPLES <- 1000
 UNCERTAINTY <-  T
 
 ### MSLT & PIFs options
@@ -167,55 +169,34 @@ parameters  <-   GetParameters(
   DIABETES_IHD_RR_M= c(2.16, 1.82, 2.56),
   DIABETES_STROKE_RR_M= c(1.83, 1.60, 2.08))
 
+load("parameters.RData")
 
 # ---- Run model ----
-# 
-# ### Non-parallel
-# results <- for(seed_current in 1:NSAMPLES){
-#   for(i in 1:nrow(scenarios_ShortTrips)){
-# 
-#     for(p in 1:length(parameters))
-#       assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
-# 
-#     if (file.exists(scenarios_ShortTrips[i,]$scenario_location)){
-#       print(scenarios_ShortTrips[i,]$scenario_location)
-#       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
-#                        persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
-#     }
-# 
-#   }
-# }
 
-# unregister <- function() {
-#   env <- foreach:::.foreachGlobals
-#   rm(list=ls(name=env), pos=env)
-# }
-# 
-# # 
+
 print(paste0("iterating through ",nrow(scenarios_ShortTrips)," scenarios at ",Sys.time()))
 number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
-seeds <- 1:NSAMPLES
+seeds <-1:NSAMPLES
 registerDoParallel(cl)
 start_time = Sys.time()
-### Try to run in parallel
-## Comment out parallel loop
-results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
 
-            foreach::foreach(i=1:nrow(scenarios_ShortTrips), # Try 10 scenarios at the time
-                             .combine=rbind,
-                             .verbose=F,
-                             .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr")
-# seed_current=1
+results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
+  
+  foreach::foreach(i=1:nrow(scenarios_ShortTrips), # Try 10 scenarios at the time
+                   .combine=rbind,
+                   .verbose=F,
+                   .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr")
+                   
   ) %dopar% {
     for(p in 1:length(parameters))
-     assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
-# i=1
+      assign(names(parameters)[p],parameters[[p]][[seed_current]],pos=1)
+    
     if (file.exists(scenarios_ShortTrips[i,]$scenario_location))
       CalculationModel(output_location=scenarios_ShortTrips[i,]$output_location,
-                     persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
-
+                       persons_matched= read.csv(scenarios_ShortTrips[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM"))
+    
     end_time = Sys.time()
     end_time - start_time
     stopCluster(cl)
@@ -225,24 +206,24 @@ results <-  foreach::foreach(seed_current=seeds,.export=ls(globalenv())) %:%
 # ---- Summarize results ---------------
 
 # ---- Health outcomes ----
-# Combine outputs and save (outputs raw here "C:/dot-hia/output/melbourne-outputs-raw" get combined to here "C:/dot-hia/output/melbourne-outputs-combined")
+# Combine outputs and save 
 # Diseases
 for (i in 1:nrow(scenarios_ShortTrips)){
-  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/disease/'), ## BZ: changed output_location for outputLocation
+  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/disease/'), 
                  paste0(combinedLocationDisease,"/",scenarios_ShortTrips[i,]$scenario, ".rds"))
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
 }
 
 # Life years
 for (i in 1:nrow(scenarios_ShortTrips)){
-  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/life_years/'), ## BZ: changed output_location for outputLocation
+  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/life_years/'), 
                  paste0(combinedLocationLifeYears,"/",scenarios_ShortTrips[i,]$scenario, ".rds"))
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
 }
 
 # Over life course
 for (i in 1:nrow(scenarios_ShortTrips)){
-  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/output_df_agg/'), ## BZ: changed output_location for outputLocation
+  combineOutputs(paste0(scenarios_ShortTrips[i,]$output_location,'/output_df_agg/'), 
                  paste0(combineLocationOutputAgg,"/",scenarios_ShortTrips[i,]$scenario, ".rds"))
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_ShortTrips)," complete at ",Sys.time(),"\n"))
 }
@@ -252,7 +233,7 @@ for (i in 1:nrow(scenarios_ShortTrips)){
 
 output_diseases_change <- CalculateDisease(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/disease"))
 output_life_years_change <- CalculateLifeYears(inputDirectory=paste0(local_dir_path, "results/scenarioTripsReplace/melbourne-outputs-combined/LifeYears")) 
-## To large, do list and then append list
+## Do list and then append list
 index <- 1
 list_output_agg <- list()
 for (i in 1:nrow(scenarios_ShortTrips)) {
@@ -265,6 +246,8 @@ index <- index + 1
 output_df_agg <- do.call(rbind.data.frame, list_output_agg)
 
 # Save results 
+ 
+ 
 saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change.rds"))
 saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change.rds"))
 saveRDS(output_df_agg, paste0(finalLocation,"/output_df_agg.rds"))
