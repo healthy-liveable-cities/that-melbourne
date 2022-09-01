@@ -1,0 +1,11 @@
+"","age","sex","scen","meets_base","meets_base_se","meets_scen","meets_scen_se","max_walk","max_cycle","purpose","title1","scen_order"
+"1","65plus","all","all_0_10","42.23%",0.0164,"66.06%",0.0157,0,10,"all","10km = cycling",5
+"2","65plus","all","all_0_2","42.23%",0.0164,"50.94%",0.0165,0,2,"all","2km = cycling",3
+"3","65plus","all","all_0_5","42.23%",0.0164,"61.25%",0.0161,0,5,"all","5km = cycling",4
+"4","65plus","all","all_1_0","42.23%",0.0164,"44.9%",0.0166,1,0,"all","1km = walking",1
+"5","65plus","all","all_1_10","42.23%",0.0164,"67.22%",0.0155,1,10,"all","1km = walking ; 1 km < cycling = 10 km",8
+"6","65plus","all","all_1_2","42.23%",0.0164,"52.23%",0.0165,1,2,"all","1km = walking ; 1 km < cycling = 2 km",6
+"7","65plus","all","all_1_5","42.23%",0.0164,"62.44%",0.0159,1,5,"all","1km = walking ; 1 km < cycling = 5 km",7
+"8","65plus","all","all_2_0","42.23%",0.0164,"53.07%",0.0164,2,0,"all","2km = walking",2
+"9","65plus","all","all_2_10","42.23%",0.0164,"67.3%",0.0154,2,10,"all","2km = walking ; 2 km < cycling = 10 km",10
+"10","65plus","all","all_2_5","42.23%",0.0164,"62.64%",0.0159,2,5,"all","2km = walking ; 2 km < cycling = 5 km",9

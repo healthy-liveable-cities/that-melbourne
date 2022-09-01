@@ -143,7 +143,7 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 
 # --- Parameters ----
 
-NSAMPLES <- 10
+NSAMPLES <- 1
 UNCERTAINTY <-  T
 
 ### MSLT & PIFs options

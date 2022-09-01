@@ -1,0 +1,11 @@
+"","age","sex","scen","meets_base","meets_base_se","meets_scen","meets_scen_se","max_walk","max_cycle","purpose","title1","scen_order"
+"1","all","male","commuting_0_10","54.06%",0.0115,"58.3%",0.0114,0,10,"commuting","10km = cycling",5
+"2","all","male","commuting_0_2","54.06%",0.0115,"54.52%",0.0115,0,2,"commuting","2km = cycling",3
+"3","all","male","commuting_0_5","54.06%",0.0115,"56.04%",0.0114,0,5,"commuting","5km = cycling",4
+"4","all","male","commuting_1_0","54.06%",0.0115,"54.11%",0.0115,1,0,"commuting","1km = walking",1
+"5","all","male","commuting_1_10","54.06%",0.0115,"58.3%",0.0114,1,10,"commuting","1km = walking ; 1 km < cycling = 10 km",8
+"6","all","male","commuting_1_2","54.06%",0.0115,"54.53%",0.0115,1,2,"commuting","1km = walking ; 1 km < cycling = 2 km",6
+"7","all","male","commuting_1_5","54.06%",0.0115,"56.04%",0.0114,1,5,"commuting","1km = walking ; 1 km < cycling = 5 km",7
+"8","all","male","commuting_2_0","54.06%",0.0115,"54.6%",0.0115,2,0,"commuting","2km = walking",2
+"9","all","male","commuting_2_10","54.06%",0.0115,"58.31%",0.0114,2,10,"commuting","2km = walking ; 2 km < cycling = 10 km",10
+"10","all","male","commuting_2_5","54.06%",0.0115,"56.09%",0.0114,2,5,"commuting","2km = walking ; 2 km < cycling = 5 km",9
