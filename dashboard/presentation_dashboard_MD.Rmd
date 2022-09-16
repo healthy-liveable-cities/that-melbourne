@@ -1,0 +1,455 @@
+---
+title: "Shifting car travel to active modes to improve population health and achieve transport goals: a simulation study"
+author: Belen Zapata-Diomedi, Alan Both, Ali Abbas, James Woodcock, Annette Kroen, Melanie Davern, Lucy Gunn
+date: "`r Sys.Date()`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: column
+    source_code: embed
+    stroyboard: true
+    navbar:
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+library(flexdashboard)
+library(kableExtra)
+library(shiny)
+library(plotly)
+library(dplyr)
+library(DT)
+library(knitr)
+library(shinyWidgets)
+# install.packages('rsconnect')
+
+
+
+pacman::p_load(
+  rio,             # data import/export     
+  here,            # locate files
+  tidyverse,       # data management and visualization
+  flexdashboard,   # dashboard versions of R Markdown reports
+  shiny,           # interactive figures
+  plotly           # interactive figures
+)
+
+
+# Load data ---------------------------------------------------------------
+scenariosDF <- crossing(data.frame(max_walk=c(0,1,2)),
+                        data.frame(max_cycle=c(0,2,5)),
+                        data.frame(purpose=c("commuting", "all"))) %>%
+  filter(max_walk!=max_cycle) %>%
+  mutate(scen=paste0(purpose,"_",max_walk,"_",max_cycle)) %>%
+  mutate(title1=paste0(ifelse(max_walk>0, max_walk, max_cycle), "km \u2265 ",
+                       ifelse(max_walk>0, "walking", "cycling"), ifelse(max_walk>0 & max_cycle>0, paste(" ;", max_walk, "km",
+                                                                                                        "<", "cycling \u2264", max_cycle, "km"), ""))) 
+
+# Combinations age and sex for graphs and results
+age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus", "all")),
+                            data.frame(sex=c('male', 'female', 'all'))) %>%
+  dplyr::mutate(cohort=paste0(age,"_",sex))
+
+
+diseaseLevels <- c("ishd","strk",
+                   "brsc","carc","tbalc","utrc","mltm", "chml","stmc", "lvrc","hanc",
+                   "dmt2", 
+                   "dprd", 
+                   "adaod")
+diseaseLabels <- c("Ischemic heart disease","Stroke",
+                   "Breast cancer","Colon cancer","Lung cancer","Uterine cancer","Multiple myeloma", 
+                   "Chronic myeloid leukemia", "Stomach cancer", "Liver cancer","Head and neck cancer",
+                   "Diabetes type 2",
+                   "Depression", 
+                   "Alzheimers disease and other dementias")
+
+finalLocation <- "./output/melbourne-outputs"
+
+output_df_agg_all <- import(here(paste0(finalLocation,"/output_df_agg.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+output_diseases_change <- import(here(paste0(finalLocation,"/output_diseases_change.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+output_life_years_change <- import(here(paste0(finalLocation,"/output_life_years_change.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+PAall<-import(here(paste0(finalLocation,"/PAall.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+PAallGuide<-import(here(paste0(finalLocation,"/PAallGuide.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+output_transport_modes<-import(here(paste0(finalLocation,"/output_transport_modes.rds"))) %>% ## add titles
+  left_join(scenariosDF)
+
+output_transport_modes <- as_tibble(output_transport_modes %>%
+    mutate(mode=factor(mode,
+                       levels=c("walking","bicycle","public.transport","car","other"),
+                       labels=c("Walking","Cycling","Public transport","Car","Other"))) %>%
+    mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex)) %>%
+    mutate(scenario=factor(scenario, levels=c("bl","sc"), labels=c("Base case", "Scenario"))))
+
+```
+
+```{r data}
+
+### Create user inputs
+
+scenario_choice <- unique(output_transport_modes$title1)
+age_choice <- unique(output_transport_modes$age)
+sex_choice <- unique(output_transport_modes$sex) 
+purpose_choice <- unique(output_transport_modes$purpose)
+```
+
+# Scenarios {.sidebar}
+
+Use the tabs to select which age and sex groups, distances travelled by car to be replaced by walking, cycling or a combination of both and type of trips.
+
+```{r}
+# Graph showing changes in transport mode share for selected scenarios
+
+### selection Input based on columns age, sex and scenario (title1)
+selectInput("scenario", label= "Scenario:",
+            choices = scenario_choice,
+            selected = scenario_choice[[1]])
+
+selectInput("age", label= "Age group:",choices = age_choice,
+            selected = age_choice[[1]])
+
+selectInput("sex", label= "Sex:",
+            choices = sex_choice,
+            selected = sex_choice[[1]])
+
+selectInput("purpose", label = "Purpose:",
+            choices = purpose_choice,
+            selected = purpose_choice[[1]])
+
+
+```
+
+# Transport mode share
+
+```{r}
+
+renderPlot({output_transport_modes %>%
+                filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+   ggplot(aes(x=prop, y=mode, fill=scenario)) +
+    geom_bar(stat="identity", position="dodge") +
+    scale_fill_manual(values=c("#E69F00", "#56B4E9")) +
+    labs(x="Proportion of all trips") +
+    geom_text(aes(label=paste0(round(prop*100,1),"%")),
+              position=position_dodge(width=0.9),
+              hjust=-0.05, vjust=0.5, size=4) +
+    scale_x_continuous(labels = scales::percent_format(accuracy = 5L),limits=c(0,.8)) +
+    theme_classic() +
+   theme(plot.title=element_text(size=16, hjust = 0.5),
+          axis.text=element_text(size=14),
+          axis.title=element_text(size=14),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=14),
+          legend.key = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(size=14))})
+
+
+```
+
+# Incidence
+
+### Accumulated number of diseases prevented over the life course of the modelled population.
+
+```{r}
+
+renderPlot({as_tibble(output_diseases_change) %>%
+    mutate(purpose = case_when(grepl("all", scen) ~ "all",
+                               grepl("commuting", scen) ~ "commuting")) %>%
+     filter(measure=="inc.num") %>%
+    # somewhere in the scripts tablc has been mislabeled tbalct
+    mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
+    mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
+    mutate(across(median:percentile975, round, digits=3)) %>%
+    dplyr::select(disease,median,percentile025,percentile975, scen, title1, age, sex, purpose, title1) %>% mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex)) %>%
+                filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+                  ggplot(aes(x=median, y=disease)) +
+    geom_bar(stat="identity", color=NA, fill="#E69F00", 
+             position=position_dodge()) +
+    labs(x="Change incidence") +
+    geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    scale_x_continuous(labels = scales::comma, 
+                       breaks = waiver(),
+                       minor_breaks = NULL,
+                       n.breaks = 10) +
+    theme_classic() +
+    theme(legend.position = "none") +
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          axis.text.x = element_text(angle=90),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12))})
+```
+
+### Number of diseases prevented per year of simulation for the modelled population.
+
+```{r}
+renderPlot({as_tibble(output_df_agg_all) %>%
+    mutate(purpose = case_when(grepl("all", scen) ~ "all",
+                               grepl("commuting", scen) ~ "commuting")) %>%
+     filter(measure=="inc.num") %>%
+    # somewhere in the scripts tablc has been mislabeled tbalct
+    mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
+    mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
+    mutate(across(median:percentile975, round, digits=3)) %>%
+    dplyr::select(year, disease,median,percentile025,percentile975, scen, title1, age, sex, purpose, title1) %>% mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex)) %>%
+                filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+  ggplot(aes(x=year, y=median, colour = disease)) +
+    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal, removed UI to graph all diseases in one graph
+    geom_smooth(se=FALSE) + #or geom_line
+    # facet_grid(rows=vars(disease), scales = "free_y") +
+    scale_y_continuous(
+      name = waiver(),
+      breaks = waiver(),
+      minor_breaks = NULL,
+      n.breaks = 5,
+      labels = waiver()) +
+    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
+    labs(x="Years since scenario commenced", y="Incidence") +
+    theme_classic() +
+    theme(legend.position = "none") +
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12)) + 
+          geom_hline(yintercept = 0, color = "black")})
+
+```
+
+# Mortality
+
+### Accumulated number of deaths prevented over the life course of the modelled population.
+
+```{r}
+
+renderPlot({as_tibble(output_diseases_change) %>%
+    mutate(purpose = case_when(grepl("all", scen) ~ "all",
+                               grepl("commuting", scen) ~ "commuting")) %>%
+     filter(measure=="mx.num") %>%
+    # somewhere in the scripts tablc has been mislabeled tbalct
+    mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
+    mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
+    mutate(across(median:percentile975, round, digits=3)) %>%
+    dplyr::select(disease,median,percentile025,percentile975, scen, title1, age, sex, purpose, title1) %>% mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex)) %>%
+                filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+                  ggplot(aes(x=median, y=disease)) +
+    geom_bar(stat="identity", color=NA, fill="#E69F00", 
+             position=position_dodge()) +
+    labs(x="Change mortality") +
+    geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    scale_x_continuous(labels = scales::comma, 
+                       breaks = waiver(),
+                       minor_breaks = NULL,
+                       n.breaks = 10) +
+    theme_classic() +
+    theme(legend.position = "none") +
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          axis.text.x = element_text(angle=90),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12))})
+    
+```
+
+### Number of deaths prevented per year of simulation for the modelled population.
+
+```{r}
+renderPlot({as_tibble(output_df_agg_all) %>%
+    mutate(purpose = case_when(grepl("all", scen) ~ "all",
+                               grepl("commuting", scen) ~ "commuting")) %>%
+     filter(measure=="mx.num") %>%
+    # somewhere in the scripts tablc has been mislabeled tbalct
+    mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
+    mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
+    mutate(across(median:percentile975, round, digits=3)) %>%
+    dplyr::select(year, disease,median,percentile025,percentile975, scen, title1, age, sex, purpose, title1) %>% mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex)) %>%
+                filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+  ggplot(aes(x=year, y=median, colour = disease)) +
+    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal, removed UI to graph all diseases in one graph
+    geom_smooth(se=FALSE) + #or geom_line
+    # facet_grid(rows=vars(disease), scales = "free_y") +
+    scale_y_continuous(
+      name = waiver(),
+      breaks = waiver(),
+      minor_breaks = NULL,
+      n.breaks = 5,
+      labels = waiver()) +
+    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
+    labs(x="Years since scenario commenced", y="Deaths prevented") +
+    theme_classic() +
+    theme(legend.position = "none") +
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12)) + 
+          geom_hline(yintercept = 0, color = "black")})
+
+```
+
+# Health-adjusted life years
+
+### Health-adjusted life years gained per year of simulation for the modelled population.
+
+```{r}
+
+renderPlot({as_tibble(output_df_agg_all) %>%
+    filter(measure=="Lwx" & scenario== "diff") %>%
+    dplyr::select(year,median,percentile025,percentile975, title1, age, sex, purpose) %>%
+    mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex))  %>%
+    arrange(year) %>%
+    ungroup() %>%
+    # year 84 (the last year, has a weird uptick, removing for now)
+    filter(year<=83) %>% 
+    filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+  ggplot(aes(x=year, y=median)) +
+    geom_smooth(se=FALSE) +
+    scale_y_continuous(
+      name = waiver(),
+      breaks = waiver(),
+      minor_breaks = NULL,
+      n.breaks = 5,
+      labels = waiver()) +
+    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
+    labs(x="Years since scenario commenced", y="Health-adjusted life years") +
+    # subtitle =  paste0(unique(tmpPlot$population)) +
+   theme_classic() +
+    labs(x="Years since scenario commenced", y="Change in health-adjusted life years")+
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12))})
+```
+
+# Life years
+
+### Life years gained per year of simulation for the modelled population.
+
+```{r}
+
+renderPlot({as_tibble(output_df_agg_all) %>%
+    filter(measure=="Lx" & scenario== "diff") %>%
+    dplyr::select(year,median,percentile025,percentile975, title1, age, sex, purpose) %>%
+    mutate(age=ifelse(age=="all", "all age groups", age),
+           sex=ifelse(sex=="all", "females and males", sex), 
+           sex=ifelse(sex=="male", "males", sex), 
+           sex=ifelse(sex=="female", "females", sex))  %>%
+    arrange(year) %>%
+    ungroup() %>%
+    # year 84 (the last year, has a weird uptick, removing for now)
+    filter(year<=83) %>% 
+    filter(age %in% input$age) %>%
+                filter(sex %in% input$sex) %>%
+                filter(title1 %in% input$scenario) %>%
+                filter(purpose %in% input$purpose) %>%
+  ggplot(aes(x=year, y=median)) +
+    geom_smooth(se=FALSE) +
+    scale_y_continuous(
+      name = waiver(),
+      breaks = waiver(),
+      minor_breaks = NULL,
+      n.breaks = 5,
+      labels = waiver()) +
+    scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
+    labs(x="Years since scenario commenced", y="Life years") +
+    # subtitle =  paste0(unique(tmpPlot$population)) +
+   theme_classic() +
+    labs(x="Years since scenario commenced", y="Change in health-adjusted life years")+
+    theme(plot.title=element_text(size=16, hjust = 0.5),
+          plot.subtitle = element_text(size=14, hjust = 0.5),
+          axis.text=element_text(size=12),
+          axis.title=element_text(size=12),
+          axis.title.y=element_blank(),
+          legend.position = "bottom",
+          legend.justification = c(1,1),
+          legend.title = element_blank(),
+          legend.text = element_text(size=12),
+          legend.key = element_blank(),
+          strip.background = element_blank(), 
+          strip.text = element_text(size=12))})
+    
+```
+
+# About
+
+This application is in support of the article "Shifting car travel to active modes to improve population health and achieve transport goals: a simulation study" published in xx. The article quantified the health impacts of active transport scenarios for Melbourne.
