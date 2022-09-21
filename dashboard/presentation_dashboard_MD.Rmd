@@ -20,10 +20,8 @@ library(dplyr)
 library(DT)
 library(knitr)
 library(shinyWidgets)
+library(rmarkdown)
 # install.packages('rsconnect')
-
-
-
 pacman::p_load(
   rio,             # data import/export     
   here,            # locate files
@@ -32,8 +30,6 @@ pacman::p_load(
   shiny,           # interactive figures
   plotly           # interactive figures
 )
-
-
 # Load data ---------------------------------------------------------------
 scenariosDF <- crossing(data.frame(max_walk=c(0,1,2)),
                         data.frame(max_cycle=c(0,2,5)),
@@ -43,13 +39,10 @@ scenariosDF <- crossing(data.frame(max_walk=c(0,1,2)),
   mutate(title1=paste0(ifelse(max_walk>0, max_walk, max_cycle), "km \u2265 ",
                        ifelse(max_walk>0, "walking", "cycling"), ifelse(max_walk>0 & max_cycle>0, paste(" ;", max_walk, "km",
                                                                                                         "<", "cycling \u2264", max_cycle, "km"), ""))) 
-
 # Combinations age and sex for graphs and results
 age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus", "all")),
                             data.frame(sex=c('male', 'female', 'all'))) %>%
   dplyr::mutate(cohort=paste0(age,"_",sex))
-
-
 diseaseLevels <- c("ishd","strk",
                    "brsc","carc","tbalc","utrc","mltm", "chml","stmc", "lvrc","hanc",
                    "dmt2", 
@@ -61,9 +54,7 @@ diseaseLabels <- c("Ischemic heart disease","Stroke",
                    "Diabetes type 2",
                    "Depression", 
                    "Alzheimers disease and other dementias")
-
 finalLocation <- "./output/melbourne-outputs"
-
 output_df_agg_all <- import(here(paste0(finalLocation,"/output_df_agg.rds"))) %>% ## add titles
   left_join(scenariosDF)
 output_diseases_change <- import(here(paste0(finalLocation,"/output_diseases_change.rds"))) %>% ## add titles
@@ -76,7 +67,6 @@ PAallGuide<-import(here(paste0(finalLocation,"/PAallGuide.rds"))) %>% ## add tit
   left_join(scenariosDF)
 output_transport_modes<-import(here(paste0(finalLocation,"/output_transport_modes.rds"))) %>% ## add titles
   left_join(scenariosDF)
-
 output_transport_modes <- as_tibble(output_transport_modes %>%
     mutate(mode=factor(mode,
                        levels=c("walking","bicycle","public.transport","car","other"),
@@ -86,13 +76,10 @@ output_transport_modes <- as_tibble(output_transport_modes %>%
            sex=ifelse(sex=="male", "males", sex), 
            sex=ifelse(sex=="female", "females", sex)) %>%
     mutate(scenario=factor(scenario, levels=c("bl","sc"), labels=c("Base case", "Scenario"))))
-
 ```
 
 ```{r data}
-
 ### Create user inputs
-
 scenario_choice <- unique(output_transport_modes$title1)
 age_choice <- unique(output_transport_modes$age)
 sex_choice <- unique(output_transport_modes$sex) 
@@ -105,30 +92,23 @@ Use the tabs to select which age and sex groups, distances travelled by car to b
 
 ```{r}
 # Graph showing changes in transport mode share for selected scenarios
-
 ### selection Input based on columns age, sex and scenario (title1)
 selectInput("scenario", label= "Scenario:",
             choices = scenario_choice,
             selected = scenario_choice[[1]])
-
 selectInput("age", label= "Age group:",choices = age_choice,
             selected = age_choice[[1]])
-
 selectInput("sex", label= "Sex:",
             choices = sex_choice,
             selected = sex_choice[[1]])
-
 selectInput("purpose", label = "Purpose:",
             choices = purpose_choice,
             selected = purpose_choice[[1]])
-
-
 ```
 
 # Transport mode share
 
 ```{r}
-
 renderPlot({output_transport_modes %>%
                 filter(age %in% input$age) %>%
                 filter(sex %in% input$sex) %>%
@@ -154,8 +134,6 @@ renderPlot({output_transport_modes %>%
           legend.key = element_blank(),
           strip.background = element_blank(),
           strip.text = element_text(size=14))})
-
-
 ```
 
 # Incidence
@@ -163,7 +141,6 @@ renderPlot({output_transport_modes %>%
 ### Accumulated number of diseases prevented over the life course of the modelled population.
 
 ```{r}
-
 renderPlot({as_tibble(output_diseases_change) %>%
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
@@ -252,7 +229,6 @@ renderPlot({as_tibble(output_df_agg_all) %>%
           strip.background = element_blank(), 
           strip.text = element_text(size=12)) + 
           geom_hline(yintercept = 0, color = "black")})
-
 ```
 
 # Mortality
@@ -260,7 +236,6 @@ renderPlot({as_tibble(output_df_agg_all) %>%
 ### Accumulated number of deaths prevented over the life course of the modelled population.
 
 ```{r}
-
 renderPlot({as_tibble(output_diseases_change) %>%
     mutate(purpose = case_when(grepl("all", scen) ~ "all",
                                grepl("commuting", scen) ~ "commuting")) %>%
@@ -350,7 +325,6 @@ renderPlot({as_tibble(output_df_agg_all) %>%
           strip.background = element_blank(), 
           strip.text = element_text(size=12)) + 
           geom_hline(yintercept = 0, color = "black")})
-
 ```
 
 # Health-adjusted life years
@@ -358,7 +332,6 @@ renderPlot({as_tibble(output_df_agg_all) %>%
 ### Health-adjusted life years gained per year of simulation for the modelled population.
 
 ```{r}
-
 renderPlot({as_tibble(output_df_agg_all) %>%
     filter(measure=="Lwx" & scenario== "diff") %>%
     dplyr::select(year,median,percentile025,percentile975, title1, age, sex, purpose) %>%
@@ -406,7 +379,6 @@ renderPlot({as_tibble(output_df_agg_all) %>%
 ### Life years gained per year of simulation for the modelled population.
 
 ```{r}
-
 renderPlot({as_tibble(output_df_agg_all) %>%
     filter(measure=="Lx" & scenario== "diff") %>%
     dplyr::select(year,median,percentile025,percentile975, title1, age, sex, purpose) %>%
@@ -453,3 +425,39 @@ renderPlot({as_tibble(output_df_agg_all) %>%
 # About
 
 This application is in support of the article "Shifting car travel to active modes to improve population health and achieve transport goals: a simulation study" published in xx. The article quantified the health impacts of active transport scenarios for Melbourne.
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
